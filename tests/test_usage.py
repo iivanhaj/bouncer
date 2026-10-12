@@ -97,7 +97,9 @@ def test_missing_usage_is_estimated_and_flagged(upstream):
 
 def test_stream_with_usage_chunk_uses_exact_numbers(upstream):
     usage_chunk = {"choices": [], "usage": {"prompt_tokens": 40, "completion_tokens": 2}}
-    upstream.mock(return_value=httpx.Response(200, text=sse(content_chunk("Hi"), content_chunk("!"), usage_chunk, "[DONE]")))
+    upstream.mock(
+        return_value=httpx.Response(200, text=sse(content_chunk("Hi"), content_chunk("!"), usage_chunk, "[DONE]"))
+    )
 
     run_requests({**CHAT, "stream": True})
 
@@ -123,7 +125,9 @@ def test_stream_without_usage_counts_chunks(upstream):
         pytest.param(httpx.Response(500), CHAT, "upstream_error", id="upstream 5xx"),
         pytest.param(httpx.ReadTimeout("slow"), CHAT, "upstream_timeout", id="upstream timeout"),
         pytest.param(httpx.ConnectError("down"), {**CHAT, "stream": True}, "upstream_error", id="stream unreachable"),
-        pytest.param(httpx.Response(200, json=COMPLETION), {**CHAT, "model": "unlisted"}, "bad_request", id="unknown model"),
+        pytest.param(
+            httpx.Response(200, json=COMPLETION), {**CHAT, "model": "unlisted"}, "bad_request", id="unknown model"
+        ),
     ],
 )
 def test_failures_are_logged_with_a_status(upstream, upstream_result, body, status):

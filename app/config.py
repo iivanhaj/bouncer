@@ -11,9 +11,7 @@ class DatabaseSettings(BaseSettings):
 
     # hide_input_in_errors: a rejected setting (e.g. an admin token one character too short)
     # must never be printed in the startup error, where it would end up in logs.
-    model_config = SettingsConfigDict(
-        env_prefix="BOUNCER_", env_file=".env", extra="ignore", hide_input_in_errors=True
-    )
+    model_config = SettingsConfigDict(env_prefix="BOUNCER_", env_file=".env", extra="ignore", hide_input_in_errors=True)
 
     database_url: str = "postgresql+asyncpg://bouncer:bouncer@localhost:5432/bouncer"
 
@@ -68,9 +66,7 @@ class Settings(DatabaseSettings):
     @model_validator(mode="after")
     def stale_age_outlives_every_request(self) -> "Settings":
         # If a request could outlive the stale age, cleanup would free a slot that's still in use.
-        longest_request = max(
-            self.stream_total_timeout, self.upstream_connect_timeout + self.upstream_read_timeout
-        )
+        longest_request = max(self.stream_total_timeout, self.upstream_connect_timeout + self.upstream_read_timeout)
         if self.concurrency_stale_seconds <= longest_request:
             raise ValueError(
                 f"concurrency_stale_seconds ({self.concurrency_stale_seconds}) must be longer than "

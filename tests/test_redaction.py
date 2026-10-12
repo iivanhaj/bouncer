@@ -166,7 +166,9 @@ def test_patterns_stay_fast_on_adversarial_input(name):
         for _ in detector.pattern.finditer(text):
             pass
         elapsed = time.perf_counter() - start
-        assert elapsed < 0.5, f"{detector.category} pattern {detector.pattern.pattern[:40]!r} took {elapsed:.2f}s on {name}"
+        assert (
+            elapsed < 0.5
+        ), f"{detector.category} pattern {detector.pattern.pattern[:40]!r} took {elapsed:.2f}s on {name}"
 
 
 @pytest.mark.parametrize("name", ADVERSARIAL_INPUTS)

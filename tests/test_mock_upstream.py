@@ -9,7 +9,7 @@ CHAT = {"model": "mock", "messages": [{"role": "user", "content": "Say hi to me"
 
 
 def data_events(text: str) -> list[str]:
-    return [line[len("data: "):] for line in text.splitlines() if line.startswith("data: ")]
+    return [line[len("data: ") :] for line in text.splitlines() if line.startswith("data: ")]
 
 
 def test_non_streaming_returns_completion_with_usage():

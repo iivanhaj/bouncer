@@ -18,7 +18,7 @@ CHAT_COMPLETIONS_PATH = "/v1/chat/completions"
 
 def _transport_error(exc: httpx.RequestError) -> GatewayError:
     """Map a network-level failure to a gateway error. Order matters: ConnectTimeout is a TimeoutException."""
-    if isinstance(exc, (httpx.ConnectError, httpx.ConnectTimeout)):
+    if isinstance(exc, httpx.ConnectError | httpx.ConnectTimeout):
         return GatewayError(502, "The model server is unreachable", "upstream_error", "upstream_unavailable")
     if isinstance(exc, httpx.TimeoutException):
         return GatewayError(504, "The model server timed out", "upstream_error", "upstream_timeout")
@@ -42,15 +42,17 @@ async def create_chat_completion(client: httpx.AsyncClient, payload: dict[str, A
     try:
         response = await client.post(CHAT_COMPLETIONS_PATH, json=payload)
     except httpx.RequestError as exc:
-        raise _transport_error(exc)
+        raise _transport_error(exc) from exc
 
     if response.status_code >= 400:
         raise _status_error(response.status_code, response.content)
 
     try:
         return response.json()
-    except ValueError:
-        raise GatewayError(502, "The model server returned an invalid response", "upstream_error", "upstream_error")
+    except ValueError as err:
+        raise GatewayError(
+            502, "The model server returned an invalid response", "upstream_error", "upstream_error"
+        ) from err
 
 
 async def open_chat_stream(
@@ -70,7 +72,7 @@ async def open_chat_stream(
     try:
         response = await client.send(request, stream=True)
     except httpx.RequestError as exc:
-        raise _transport_error(exc)
+        raise _transport_error(exc) from exc
 
     if response.status_code >= 400:
         content = await response.aread()
@@ -103,7 +105,7 @@ def _inspect_event(event: list[str], stats: StreamStats) -> bool:
         if not line.startswith("data:") or line == "data: [DONE]":
             continue
         try:
-            chunk = json.loads(line[len("data:"):])
+            chunk = json.loads(line[len("data:") :])
         except ValueError:
             return False
         if not isinstance(chunk, dict):

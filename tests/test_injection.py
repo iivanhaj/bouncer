@@ -1,6 +1,5 @@
 import base64
 import time
-import uuid
 
 import httpx
 import pytest

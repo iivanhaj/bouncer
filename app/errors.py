@@ -48,3 +48,8 @@ def register_error_handlers(app: FastAPI) -> None:
         location = ".".join(str(part) for part in first["loc"] if part != "body")
         message = f"{location}: {first['msg']}" if location else first["msg"]
         return error_response(400, message, "invalid_request_error", "invalid_request")
+
+
+def dependency_unavailable() -> GatewayError:
+    """503 for when Redis or Postgres can't be reached. The gateway fails closed (DESIGN.md §2)."""
+    return GatewayError(503, "The gateway is temporarily unavailable", "api_error", "dependency_unavailable")

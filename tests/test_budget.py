@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 import pytest
@@ -34,8 +34,12 @@ def test_headroom_formula():
 @pytest.mark.parametrize(
     ("moment", "start", "end"),
     [
-        (datetime(2026, 3, 15, 12, tzinfo=timezone.utc), datetime(2026, 3, 1, tzinfo=timezone.utc), datetime(2026, 4, 1, tzinfo=timezone.utc)),
-        (datetime(2026, 12, 31, 23, 59, tzinfo=timezone.utc), datetime(2026, 12, 1, tzinfo=timezone.utc), datetime(2027, 1, 1, tzinfo=timezone.utc)),
+        (datetime(2026, 3, 15, 12, tzinfo=UTC), datetime(2026, 3, 1, tzinfo=UTC), datetime(2026, 4, 1, tzinfo=UTC)),
+        (
+            datetime(2026, 12, 31, 23, 59, tzinfo=UTC),
+            datetime(2026, 12, 1, tzinfo=UTC),
+            datetime(2027, 1, 1, tzinfo=UTC),
+        ),
     ],
 )
 def test_month_boundaries_are_utc_calendar_months(moment, start, end):
@@ -44,13 +48,13 @@ def test_month_boundaries_are_utc_calendar_months(moment, start, end):
 
 def counter(key_id: str) -> int | None:
     with redis.Redis.from_url(TEST_REDIS_URL) as r:
-        value = r.get(counter_key(uuid.UUID(key_id), datetime.now(timezone.utc)))
+        value = r.get(counter_key(uuid.UUID(key_id), datetime.now(UTC)))
     return None if value is None else int(value)
 
 
 def set_counter(key_id: str, value: int) -> None:
     with redis.Redis.from_url(TEST_REDIS_URL) as r:
-        r.set(counter_key(uuid.UUID(key_id), datetime.now(timezone.utc)), value)
+        r.set(counter_key(uuid.UUID(key_id), datetime.now(UTC)), value)
 
 
 @pytest.fixture
@@ -119,8 +123,8 @@ def test_lost_counter_is_rebuilt_from_the_usage_log(upstream):
         "INSERT INTO requests (id, key_id, model, prompt_tokens, completion_tokens, usage_estimated, "
         "cost_usd, latency_ms, status, created_at) VALUES ($1, $2, 'm', $3, 0, false, 0, 1, 'ok', $4)"
     )
-    run_sql(insert, uuid.uuid4(), key_id, USABLE, datetime.now(timezone.utc))
-    run_sql(insert, uuid.uuid4(), key_id, 999_999, datetime(2020, 1, 15, tzinfo=timezone.utc))
+    run_sql(insert, uuid.uuid4(), key_id, USABLE, datetime.now(UTC))
+    run_sql(insert, uuid.uuid4(), key_id, 999_999, datetime(2020, 1, 15, tzinfo=UTC))
     assert counter(key["id"]) is None  # Redis has "lost" it
 
     with TestClient(create_app(make_settings(**SETTINGS))) as client:
@@ -137,7 +141,7 @@ async def test_settle_skips_a_missing_counter_instead_of_restarting_it_at_zero()
     key_id = uuid.uuid4()
     client = aredis.from_url(TEST_REDIS_URL)
     try:
-        await BudgetEnforcer(client, None, make_settings()).settle(key_id, 42, datetime.now(timezone.utc))
+        await BudgetEnforcer(client, None, make_settings()).settle(key_id, 42, datetime.now(UTC))
     finally:
         await client.aclose()
 

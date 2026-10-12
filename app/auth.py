@@ -41,9 +41,7 @@ async def require_api_key(
     return api_key
 
 
-async def require_admin(
-    request: Request, credentials: HTTPAuthorizationCredentials | None = Depends(bearer)
-) -> None:
+async def require_admin(request: Request, credentials: HTTPAuthorizationCredentials | None = Depends(bearer)) -> None:
     expected = request.app.state.settings.admin_token.get_secret_value()
     # compare_digest takes the same time whether or not the strings match, so response timing
     # can't reveal how much of a guessed admin token was right.

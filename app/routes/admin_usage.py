@@ -1,7 +1,7 @@
 """Read-only admin views over the usage log: what the dashboard shows."""
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Literal
 
@@ -61,8 +61,8 @@ async def usage(
 ) -> UsageReport:
     """Tokens, cost, latency and outcomes per key over the last `days`, plus a time series."""
     settings = request.app.state.settings
-    since = datetime.now(timezone.utc) - timedelta(days=days)
-    month_start, _ = month_of(datetime.now(timezone.utc))
+    since = datetime.now(UTC) - timedelta(days=days)
+    month_start, _ = month_of(datetime.now(UTC))
     in_window = and_(RequestLog.created_at >= since, RequestLog.key_id == key_id if key_id else true())
     tokens = RequestLog.prompt_tokens + RequestLog.completion_tokens
     p95 = func.percentile_cont(0.95).within_group(RequestLog.latency_ms)

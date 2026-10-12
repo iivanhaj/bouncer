@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,16 +8,37 @@ from app.budget import headroom
 from app.main import create_app
 from tests.helpers import ADMIN_HEADERS, create_key, make_settings, run_sql
 
-NOW = datetime.now(timezone.utc)
+NOW = datetime.now(UTC)
 
 
-def log_row(key_id, *, status="ok", prompt=10, completion=5, cost="0.01", latency=100, ttft=None,
-            rules=None, score=None, at=None):
+def log_row(
+    key_id,
+    *,
+    status="ok",
+    prompt=10,
+    completion=5,
+    cost="0.01",
+    latency=100,
+    ttft=None,
+    rules=None,
+    score=None,
+    at=None,
+):
     run_sql(
         "INSERT INTO requests (id, key_id, model, upstream, prompt_tokens, completion_tokens, usage_estimated, "
         "cost_usd, latency_ms, ttft_ms, status, blocked_rules, injection_score, created_at) "
         "VALUES ($1, $2, 'm', 'test', $3, $4, false, $5::numeric, $6, $7, $8, $9, $10, $11)",
-        uuid.uuid4(), uuid.UUID(key_id), prompt, completion, cost, latency, ttft, status, rules, score, at or NOW,
+        uuid.uuid4(),
+        uuid.UUID(key_id),
+        prompt,
+        completion,
+        cost,
+        latency,
+        ttft,
+        status,
+        rules,
+        score,
+        at or NOW,
     )
 
 

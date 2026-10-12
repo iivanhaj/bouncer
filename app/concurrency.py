@@ -6,7 +6,7 @@ import anyio
 import redis.asyncio as redis
 from redis.exceptions import RedisError
 
-from app.errors import GatewayError
+from app.errors import GatewayError, dependency_unavailable
 
 logger = logging.getLogger(__name__)
 
@@ -47,11 +47,9 @@ class ConcurrencyLimiter:
     async def acquire(self, key_id: uuid.UUID, limit: int, request_id: uuid.UUID) -> Slot:
         set_key = f"inflight:{key_id}"
         try:
-            acquired, in_progress = await self._script(
-                keys=[set_key], args=[self._stale_ms, limit, str(request_id)]
-            )
-        except RedisError:
-            raise GatewayError(503, "The gateway is temporarily unavailable", "api_error", "dependency_unavailable")
+            acquired, in_progress = await self._script(keys=[set_key], args=[self._stale_ms, limit, str(request_id)])
+        except RedisError as err:
+            raise dependency_unavailable() from err
 
         if not acquired:
             raise GatewayError(

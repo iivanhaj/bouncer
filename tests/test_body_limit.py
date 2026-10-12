@@ -60,9 +60,7 @@ def test_chunked_body_over_the_limit_is_413(client):
 
 def test_limit_runs_before_auth(client):
     # Unauthenticated oversized requests are rejected without touching the database.
-    response = client.post(
-        "/v1/chat/completions", content=body_of_size(LIMIT + 1), headers={"Authorization": ""}
-    )
+    response = client.post("/v1/chat/completions", content=body_of_size(LIMIT + 1), headers={"Authorization": ""})
 
     assert response.status_code == 413
 

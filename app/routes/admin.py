@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
@@ -68,9 +68,7 @@ async def create_key(body: CreateKeyRequest, request: Request) -> CreatedKey:
         rpm_limit=body.rpm_limit,
         max_concurrent=body.max_concurrent,
         monthly_token_budget=body.monthly_token_budget,
-        expires_at=(
-            datetime.now(timezone.utc) + timedelta(days=body.expires_in_days) if body.expires_in_days else None
-        ),
+        expires_at=(datetime.now(UTC) + timedelta(days=body.expires_in_days) if body.expires_in_days else None),
     )
     async with request.app.state.sessionmaker() as session:
         session.add(api_key)
@@ -95,6 +93,6 @@ async def revoke_key(key_id: uuid.UUID, request: Request) -> Response:
             raise GatewayError(404, "API key not found", "invalid_request_error", "key_not_found")
         # Revoking twice keeps the original revocation time.
         if api_key.revoked_at is None:
-            api_key.revoked_at = datetime.now(timezone.utc)
+            api_key.revoked_at = datetime.now(UTC)
             await session.commit()
     return Response(status_code=204)

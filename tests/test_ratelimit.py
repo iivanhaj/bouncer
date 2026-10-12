@@ -54,24 +54,25 @@ async def test_concurrent_requests_cannot_exceed_the_limit():
 @pytest.mark.anyio
 async def test_window_slides():
     key = uuid.uuid4()
-    async with limiter(window_seconds=0.3) as rl:
+    # Windows and sleeps are generous so slow CI runners can't make this flaky.
+    async with limiter(window_seconds=1.0) as rl:
         assert (await rl.hit(key, 2, uuid.uuid4())).allowed
         assert (await rl.hit(key, 2, uuid.uuid4())).allowed
         assert not (await rl.hit(key, 2, uuid.uuid4())).allowed
-        await asyncio.sleep(0.35)
+        await asyncio.sleep(1.1)
         assert (await rl.hit(key, 2, uuid.uuid4())).allowed
 
 
 @pytest.mark.anyio
 async def test_rejected_requests_do_not_extend_the_lockout():
     key = uuid.uuid4()
-    async with limiter(window_seconds=0.4) as rl:
+    async with limiter(window_seconds=1.0) as rl:
         assert (await rl.hit(key, 1, uuid.uuid4())).allowed  # t=0
-        await asyncio.sleep(0.25)
-        for _ in range(5):  # t=0.25: hammering while limited
+        await asyncio.sleep(0.3)
+        for _ in range(5):  # t=0.3: hammering while limited (0.7s of margin before the window ends)
             assert not (await rl.hit(key, 1, uuid.uuid4())).allowed
-        await asyncio.sleep(0.2)  # t=0.45: the first request has slid out
-        # If the rejected attempts at t=0.25 had been recorded, this would be blocked until t=0.65.
+        await asyncio.sleep(0.8)  # t=1.1: the first request has slid out
+        # If the rejected attempts at t=0.3 had been recorded, this would be blocked until t=1.3.
         assert (await rl.hit(key, 1, uuid.uuid4())).allowed
 
 

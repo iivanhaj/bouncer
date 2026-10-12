@@ -20,6 +20,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "respx>=0.21",
+    "ruff==0.8.6",
 ]
 
 [build-system]
@@ -34,3 +35,15 @@ app = ["lua/*.lua", "injection_rules.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+# Alembic generates these; they're kept as generated.
+extend-exclude = ["migrations/versions"]
+
+[tool.ruff.lint]
+# E/F: errors and pyflakes, I: import order, B: likely bugs, UP: modern syntax.
+select = ["E", "F", "I", "B", "UP"]
+# B008 flags function calls in default arguments, but Depends(...) there is how FastAPI works.
+ignore = ["B008"]

@@ -30,7 +30,9 @@ app = FastAPI(title="Mock upstream")
 
 def _prompt_tokens(messages: list[dict[str, Any]]) -> int:
     # Rough and deterministic: about 4 characters per token.
-    text = "".join(m["content"] if isinstance(m.get("content"), str) else json.dumps(m.get("content")) for m in messages)
+    text = "".join(
+        m["content"] if isinstance(m.get("content"), str) else json.dumps(m.get("content")) for m in messages
+    )
     return max(1, len(text) // 4)
 
 
@@ -89,8 +91,14 @@ async def chat_completions(request: Request):
             yield chunk({"content": f"tok{i} "})
         yield chunk({}, "length" if count < COMPLETION_TOKENS else "stop")
         if include_usage:
-            usage_chunk = {"id": completion_id, "object": "chat.completion.chunk", "created": created,
-                           "model": model, "choices": [], "usage": usage}
+            usage_chunk = {
+                "id": completion_id,
+                "object": "chat.completion.chunk",
+                "created": created,
+                "model": model,
+                "choices": [],
+                "usage": usage,
+            }
             yield f"data: {json.dumps(usage_chunk)}\n\n"
         yield "data: [DONE]\n\n"
 

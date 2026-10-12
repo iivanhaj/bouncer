@@ -8,7 +8,7 @@ from fastapi import Depends, Request
 from redis.exceptions import RedisError
 
 from app.auth import require_api_key
-from app.errors import GatewayError
+from app.errors import GatewayError, dependency_unavailable
 from app.models import ApiKey
 
 _SLIDING_WINDOW_SCRIPT = (Path(__file__).parent / "lua" / "sliding_window.lua").read_text()
@@ -65,9 +65,9 @@ async def enforce_rate_limit(request: Request, api_key: ApiKey = Depends(require
     request_id = uuid.uuid4()
     try:
         result = await request.app.state.rate_limiter.hit(api_key.id, api_key.rpm_limit, request_id)
-    except RedisError:
+    except RedisError as err:
         # Fail closed: a security gateway must not become unlimited when Redis is down (DESIGN.md §2).
-        raise GatewayError(503, "The gateway is temporarily unavailable", "api_error", "dependency_unavailable")
+        raise dependency_unavailable() from err
 
     if not result.allowed:
         raise GatewayError(

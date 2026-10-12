@@ -20,7 +20,11 @@ def test_overall_quality_does_not_regress():
 
 @pytest.mark.parametrize(
     "case",
-    [c for c in CASES if "expected miss" not in c.get("note", "") and "accepted false positive" not in c.get("note", "")],
+    [
+        c
+        for c in CASES
+        if "expected miss" not in c.get("note", "") and "accepted false positive" not in c.get("note", "")
+    ],
     ids=lambda c: c["text"][:50],
 )
 def test_each_case_matches_exactly(case):

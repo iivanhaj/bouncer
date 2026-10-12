@@ -41,6 +41,9 @@ class ModelRegistry(BaseModel):
         route = self.models.get(name)
         if route is None:
             raise GatewayError(
-                404, f"The model '{name}' does not exist or is not available", "invalid_request_error", "model_not_found"
+                404,
+                f"The model '{name}' does not exist or is not available",
+                "invalid_request_error",
+                "model_not_found",
             )
         return route

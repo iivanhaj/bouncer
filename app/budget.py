@@ -9,7 +9,7 @@ inside the headroom.
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import anyio
@@ -19,7 +19,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.config import Settings
-from app.errors import GatewayError
+from app.errors import GatewayError, dependency_unavailable
 from app.models import RequestLog
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ def headroom(settings: Settings, max_concurrent: int) -> int:
 
 def month_of(moment: datetime) -> tuple[datetime, datetime]:
     """Start and end of the UTC calendar month containing `moment`."""
-    start = moment.astimezone(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    start = moment.astimezone(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     end = start.replace(year=start.year + 1, month=1) if start.month == 12 else start.replace(month=start.month + 1)
     return start, end
 
@@ -85,9 +85,9 @@ class BudgetEnforcer:
             return
         try:
             spent = await self.spent(key_id, moment)
-        except RedisError:
+        except RedisError as err:
             # Fail closed, like the rate limiter.
-            raise GatewayError(503, "The gateway is temporarily unavailable", "api_error", "dependency_unavailable")
+            raise dependency_unavailable() from err
 
         usable = budget - headroom(self._settings, max_concurrent)
         if spent >= usable:

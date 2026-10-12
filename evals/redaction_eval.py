@@ -74,8 +74,10 @@ def main() -> None:
         print(f"{category:<13} {want:>8} {hit:>7} {want - hit:>7} {fp:>8}")
     print(f"\ncatch rate (recall):    {report.catch_rate:.1%}")
     print(f"precision:              {report.precision:.1%}")
-    print(f"false-positive prompts: {report.clean_prompts_flagged}/{report.clean_prompts} "
-          f"({report.false_positive_prompt_rate:.1%})")
+    print(
+        f"false-positive prompts: {report.clean_prompts_flagged}/{report.clean_prompts} "
+        f"({report.false_positive_prompt_rate:.1%})"
+    )
 
 
 if __name__ == "__main__":

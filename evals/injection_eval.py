@@ -59,8 +59,10 @@ def evaluate(cases_file: Path = CASES_FILE, detector: InjectionDetector | None =
 
 def main() -> None:
     for split, report in sorted(evaluate().items()):
-        print(f"[{split}] catch rate {report.caught}/{report.injections} ({report.catch_rate:.0%}), "
-              f"false positives {report.false_positives}/{report.benign} ({report.false_positive_rate:.0%})")
+        print(
+            f"[{split}] catch rate {report.caught}/{report.injections} ({report.catch_rate:.0%}), "
+            f"false positives {report.false_positives}/{report.benign} ({report.false_positive_rate:.0%})"
+        )
         for kind, verdict, text in report.mistakes:
             print(f"    {kind:<14} score {verdict.score:<4} {verdict.rules}  {text[:70]!r}")
 

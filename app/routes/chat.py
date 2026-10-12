@@ -58,9 +58,7 @@ def _usage_from_completion(record: UsageRecord, body: ChatCompletionRequest, com
         return
     choices = completion.get("choices") or [{}]
     text = (choices[0].get("message") or {}).get("content") or ""
-    record.set_usage(
-        tokens.estimate_prompt_tokens(body.messages), tokens.estimate_text_tokens(text), estimated=True
-    )
+    record.set_usage(tokens.estimate_prompt_tokens(body.messages), tokens.estimate_text_tokens(text), estimated=True)
 
 
 def _usage_from_stream(record: UsageRecord, body: ChatCompletionRequest, stats: upstream.StreamStats) -> None:

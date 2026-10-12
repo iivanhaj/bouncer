@@ -16,7 +16,9 @@ def chunk(content: str) -> str:
     return f"data: {json.dumps(body)}\n\n"
 
 
-USAGE_CHUNK = 'data: {"object":"chat.completion.chunk","choices":[],"usage":{"prompt_tokens":5,"completion_tokens":2}}\n\n'
+USAGE_CHUNK = (
+    'data: {"object":"chat.completion.chunk","choices":[],"usage":{"prompt_tokens":5,"completion_tokens":2}}\n\n'
+)
 DONE = "data: [DONE]\n\n"
 
 
@@ -116,9 +118,7 @@ def test_usage_chunk_is_stripped_when_client_did_not_ask(client, upstream):
 def test_usage_chunk_is_kept_when_client_asked(client, upstream):
     upstream.post(UPSTREAM_URL).mock(return_value=sse_response(FakeStream(chunk("Hi"), USAGE_CHUNK, DONE)))
 
-    response = client.post(
-        "/v1/chat/completions", json=stream_body(stream_options={"include_usage": True})
-    )
+    response = client.post("/v1/chat/completions", json=stream_body(stream_options={"include_usage": True}))
 
     assert USAGE_CHUNK.strip() in events(response.text)
 
@@ -150,7 +150,7 @@ def test_upstream_unreachable_before_stream_is_502(client, upstream):
 
 def last_event_error(response) -> dict:
     last = events(response.text)[-1]
-    return json.loads(last[len("data:"):])["error"]
+    return json.loads(last[len("data:") :])["error"]
 
 
 def test_connection_lost_mid_stream_sends_error_event(client, upstream):

@@ -22,8 +22,10 @@ def test_unknown_upstream_fails_at_load(tmp_path):
 
 def test_unknown_fields_are_rejected(tmp_path):
     bad = tmp_path / "models.yaml"
-    bad.write_text("models:\n  m:\n    upstream: test\n    upstream_model: m\n"
-                   "    input_price_per_1k: 0\n    output_price_per_1k: 0\n    typo_field: 1\n")
+    bad.write_text(
+        "models:\n  m:\n    upstream: test\n    upstream_model: m\n"
+        "    input_price_per_1k: 0\n    output_price_per_1k: 0\n    typo_field: 1\n"
+    )
 
     with pytest.raises(ValueError):
         ModelRegistry.load(bad, {"test"})

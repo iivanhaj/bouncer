@@ -3,7 +3,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -40,7 +40,7 @@ class UsageRecord:
     id: uuid.UUID
     key_id: uuid.UUID
     model: str
-    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     started: float = field(default_factory=time.monotonic)
 
     upstream: str | None = None

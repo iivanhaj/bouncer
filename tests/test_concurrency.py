@@ -69,9 +69,7 @@ async def test_release_frees_the_slot_and_is_idempotent():
 async def test_concurrent_acquires_cannot_exceed_the_limit():
     key = uuid.uuid4()
     async with limiter() as cl:
-        results = await asyncio.gather(
-            *(cl.acquire(key, 4, uuid.uuid4()) for _ in range(50)), return_exceptions=True
-        )
+        results = await asyncio.gather(*(cl.acquire(key, 4, uuid.uuid4()) for _ in range(50)), return_exceptions=True)
 
     assert sum(not isinstance(r, Exception) for r in results) == 4
 
@@ -143,7 +141,12 @@ def app_client():
         pytest.param(httpx.Response(500), CHAT, 502, id="non-stream upstream error"),
         pytest.param(httpx.ConnectError("down"), CHAT, 502, id="non-stream unreachable"),
         pytest.param(httpx.Response(200, text="data: [DONE]\n\n"), {**CHAT, "stream": True}, 200, id="stream success"),
-        pytest.param(httpx.Response(404, json={"error": {"message": "no"}}), {**CHAT, "stream": True}, 404, id="stream rejected at open"),
+        pytest.param(
+            httpx.Response(404, json={"error": {"message": "no"}}),
+            {**CHAT, "stream": True},
+            404,
+            id="stream rejected at open",
+        ),
         pytest.param(httpx.ConnectError("down"), {**CHAT, "stream": True}, 502, id="stream unreachable"),
     ],
 )
