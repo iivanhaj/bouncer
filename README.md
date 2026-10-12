@@ -18,7 +18,7 @@ its reasoning, and the loopholes it closes.
 | Usage logging, monthly token budgets with headroom | ✅ |
 | Redaction of personal data and secrets, prompt-injection blocking | ✅ |
 | Dashboard (keys, usage, blocked requests) | ✅ |
-| CI | Week 2 |
+| CI: lint, tests against Postgres + Redis, evaluations, dashboard build, Docker builds | ✅ |
 | Prometheus metrics, Kubernetes, load-test numbers | Week 3 |
 
 ## How a request flows

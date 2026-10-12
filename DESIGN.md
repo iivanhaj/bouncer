@@ -448,3 +448,16 @@ Answer each in one sentence, in your own words:
 10. **Why must the liveness check not depend on Redis?** (review)
 11. Why are 401s and 429s not written to Postgres?
 12. Why are there no per-key labels in Prometheus?
+
+**Added in week 2:**
+
+13. Why does the usage log drop rows when its queue is full instead of waiting?
+14. Why is the budget counter updated *before* the concurrency slot is released? (A test proves it.)
+15. Why does `settle()` refuse to recreate a missing budget counter?
+16. Why is the request body size limit part of the budget's guarantee?
+17. Why does redaction check context (`(?<![\w-])`) as well as checksums?
+18. Name two quadratic-time problems found in the redaction code, and how they were fixed.
+19. Why is the injection test set split, and why is the "test" number lower than "dev"?
+20. Why does the 403 for a blocked prompt not say which rule matched?
+21. How does the dashboard keep the admin token out of the browser?
+22. Why does YAML read a key named `on` as `True`, and where did it bite this project?
