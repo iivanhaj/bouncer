@@ -4,6 +4,8 @@ import httpx
 from fastapi import FastAPI
 
 from app.config import Settings, get_settings
+from app.errors import register_error_handlers
+from app.routes import chat
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -32,9 +34,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # Liveness only: never checks dependencies (see DESIGN.md §8).
         return {"status": "ok"}
 
-    # TODO(step 1): include your chat router here, e.g.
-    #   from app.routes import chat
-    #   app.include_router(chat.router)
+    register_error_handlers(app)
+    app.include_router(chat.router)
 
     return app
 
