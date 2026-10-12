@@ -6,25 +6,36 @@ from fastapi.responses import JSONResponse
 class GatewayError(Exception):
     """An error returned to the client in OpenAI's error format, so OpenAI SDKs can parse it."""
 
-    def __init__(self, status_code: int, message: str, type_: str, code: str | None = None):
+    def __init__(
+        self,
+        status_code: int,
+        message: str,
+        type_: str,
+        code: str | None = None,
+        headers: dict[str, str] | None = None,
+    ):
         super().__init__(message)
         self.status_code = status_code
         self.message = message
         self.type = type_
         self.code = code
+        self.headers = headers
 
 
-def error_response(status_code: int, message: str, type_: str, code: str | None = None) -> JSONResponse:
+def error_response(
+    status_code: int, message: str, type_: str, code: str | None = None, headers: dict[str, str] | None = None
+) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
         content={"error": {"message": message, "type": type_, "code": code}},
+        headers=headers,
     )
 
 
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(GatewayError)
     async def handle_gateway_error(request: Request, exc: GatewayError) -> JSONResponse:
-        return error_response(exc.status_code, exc.message, exc.type, exc.code)
+        return error_response(exc.status_code, exc.message, exc.type, exc.code, exc.headers)
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:

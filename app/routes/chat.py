@@ -1,12 +1,11 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import StreamingResponse
 from starlette.background import BackgroundTask
 
 from app import upstream
-from app.auth import require_api_key
-from app.models import ApiKey
+from app.ratelimit import Admission, enforce_rate_limit
 from app.schemas import ChatCompletionRequest
 
 router = APIRouter()
@@ -23,15 +22,20 @@ SSE_HEADERS = {
 async def chat_completions(
     body: ChatCompletionRequest,
     request: Request,
-    api_key: ApiKey = Depends(require_api_key),  # used by rate limiting in the next step
+    response: Response,
+    # FastAPI runs dependencies before validating the body, so the order is:
+    # auth -> rate limit -> body validation (DESIGN.md pipeline steps 2-4).
+    admission: Admission = Depends(enforce_rate_limit),
 ) -> dict[str, Any] | StreamingResponse:
     settings = request.app.state.settings
     client = request.app.state.http_client
+    headers = {"x-request-id": str(admission.request_id), **admission.rate_limit.headers()}
 
-    # Later steps slot in here: rate limit, injection check, redaction, concurrency, budget.
+    # Later steps slot in here: injection check, redaction, concurrency, budget.
     payload = body.to_upstream_payload(settings.max_tokens_cap)
 
     if not body.stream:
+        response.headers.update(headers)
         return await upstream.create_chat_completion(client, payload)
 
     upstream_response = await upstream.open_chat_stream(client, payload, settings.stream_first_token_timeout)
@@ -44,7 +48,7 @@ async def chat_completions(
             total_timeout=settings.stream_total_timeout,
         ),
         media_type="text/event-stream",
-        headers=SSE_HEADERS,
+        headers={**SSE_HEADERS, **headers},
         # Safety net: if the client disconnects before the relay even starts, its finally block
         # never runs, so close the upstream response here too. Closing twice is harmless.
         background=BackgroundTask(upstream_response.aclose),

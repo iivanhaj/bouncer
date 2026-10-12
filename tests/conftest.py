@@ -1,8 +1,9 @@
 import pytest
+import redis
 from alembic import command
 from alembic.config import Config
 
-from tests.helpers import TEST_DATABASE_URL, run_sql
+from tests.helpers import TEST_DATABASE_URL, TEST_REDIS_URL, run_sql
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -15,8 +16,10 @@ def migrated_database():
 
 
 @pytest.fixture(autouse=True)
-def clean_tables():
+def clean_state():
     run_sql("TRUNCATE api_keys")
+    with redis.Redis.from_url(TEST_REDIS_URL) as client:
+        client.flushdb()
 
 
 @pytest.fixture

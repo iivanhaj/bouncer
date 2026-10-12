@@ -8,14 +8,20 @@ from app.config import Settings
 TEST_DATABASE_URL = os.environ.get(
     "BOUNCER_TEST_DATABASE_URL", "postgresql+asyncpg://bouncer:bouncer@localhost:5432/bouncer_test"
 )
-ADMIN_TOKEN = "test-admin-token-0123456789abcdefghijklmnop"
+TEST_REDIS_URL = os.environ.get("BOUNCER_TEST_REDIS_URL", "redis://localhost:6379/1")
+ADMIN_TOKEN ="test-admin-token-0123456789abcdefghijklmnop"
 ADMIN_HEADERS = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
 UPSTREAM = "http://upstream.test"
 UPSTREAM_URL = f"{UPSTREAM}/v1/chat/completions"
 
 
 def make_settings(**overrides) -> Settings:
-    values = {"database_url": TEST_DATABASE_URL, "admin_token": ADMIN_TOKEN, "upstream_base_url": UPSTREAM}
+    values = {
+        "database_url": TEST_DATABASE_URL,
+        "redis_url": TEST_REDIS_URL,
+        "admin_token": ADMIN_TOKEN,
+        "upstream_base_url": UPSTREAM,
+    }
     values.update(overrides)
     return Settings(**values)
 

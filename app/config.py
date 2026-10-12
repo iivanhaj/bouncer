@@ -22,6 +22,11 @@ class Settings(DatabaseSettings):
     # Required, at least 32 characters: the gateway refuses to start without a strong admin token.
     admin_token: SecretStr = Field(min_length=32)
 
+    redis_url: str = "redis://localhost:6379/0"
+    # Short on purpose: a hanging Redis must not hang every request (DESIGN.md §2).
+    redis_timeout_ms: int = 100
+    rate_limit_window_seconds: float = 60.0
+
     upstream_base_url: str = "http://localhost:11434"
     upstream_connect_timeout: float = 5.0
     # Non-streaming: nothing arrives until generation is done, so this covers the whole generation.

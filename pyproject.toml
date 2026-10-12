@@ -12,6 +12,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.30",
     "asyncpg>=0.30",
     "alembic>=1.13",
+    "redis>=5.0",
 ]
 
 [project.optional-dependencies]
@@ -26,6 +27,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["app*"]
+
+[tool.setuptools.package-data]
+app = ["lua/*.lua"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

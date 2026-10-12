@@ -4,11 +4,13 @@ from functools import lru_cache
 
 import certifi
 import httpx
+import redis.asyncio as redis
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.config import Settings, get_settings
 from app.errors import register_error_handlers
+from app.ratelimit import RateLimiter
 from app.routes import admin, chat
 
 
@@ -41,9 +43,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         engine = create_async_engine(settings.database_url, pool_pre_ping=True)
         app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
+        redis_timeout = settings.redis_timeout_ms / 1000
+        redis_client = redis.from_url(
+            settings.redis_url, socket_timeout=redis_timeout, socket_connect_timeout=redis_timeout
+        )
+        app.state.rate_limiter = RateLimiter(redis_client, settings.rate_limit_window_seconds)
         yield
         await app.state.http_client.aclose()
         await engine.dispose()
+        await redis_client.aclose()
 
     app = FastAPI(title="Bouncer", lifespan=lifespan)
     app.state.settings = settings
