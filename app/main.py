@@ -14,6 +14,7 @@ from app.errors import register_error_handlers
 from app.models_registry import ModelRegistry
 from app.ratelimit import RateLimiter
 from app.routes import admin, chat
+from app.usage import UsageRecorder
 
 
 @lru_cache
@@ -56,7 +57,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         app.state.rate_limiter = RateLimiter(redis_client, settings.rate_limit_window_seconds)
         app.state.concurrency = ConcurrencyLimiter(redis_client, settings.concurrency_stale_seconds)
+        app.state.usage = UsageRecorder(
+            app.state.sessionmaker,
+            max_queue=settings.usage_queue_size,
+            batch_size=settings.usage_batch_size,
+            flush_interval=settings.usage_flush_interval_seconds,
+        )
+        app.state.usage.start()
         yield
+        # Flush queued usage rows before closing the database connections they need.
+        await app.state.usage.stop()
         for client in app.state.upstream_clients.values():
             await client.aclose()
         await engine.dispose()

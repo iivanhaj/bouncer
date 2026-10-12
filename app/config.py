@@ -46,6 +46,11 @@ class Settings(DatabaseSettings):
     # In-progress entries older than this are treated as leaked slots and removed (DESIGN.md §2).
     concurrency_stale_seconds: float = 360.0
 
+    # Usage log writer (DESIGN.md §6): rows are queued in memory and written in batches.
+    usage_queue_size: int = 10_000
+    usage_batch_size: int = 100
+    usage_flush_interval_seconds: float = 1.0
+
     max_tokens_cap: int = 2048
     # Also the upper bound on prompt tokens: a token is always at least one byte.
     max_body_bytes: int = 32_768

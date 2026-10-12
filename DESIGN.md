@@ -267,7 +267,9 @@ or content the apps pass along (web pages, documents, tool output).
 
 ## 6. Usage logging
 
-- **Rows are written** for every request that gets past the rate limit.
+- **Rows are written** for every request that gets past the rate limit and the request
+  schema check. (Schema errors are rejected by FastAPI before the route runs, so they get a
+  400 but no row; they will be counted in Prometheus.)
   401s and 429s go to Prometheus only, so database writes per key never
   exceed the key's rate limit.
 - **Writer:** an in-memory `asyncio.Queue` with a size limit, plus a
@@ -278,6 +280,14 @@ or content the apps pass along (web pages, documents, tool output).
   - Accepted: up to one batch lost on a crash. Budget enforcement doesn't
     depend on this log.
 - **`cost_usd`** is calculated when the row is written, using that moment's price.
+- **Token estimates** (when the upstream reports no usage, like Ollama 0.4.1 when streaming)
+  lean high: prompt = content bytes / 3 + 10 per message + 30; completion = one token per
+  streamed chunk. Rows built from estimates have `usage_estimated = true`. Measured: a real
+  31-token prompt was estimated at 42.
+- **Every request past the rate limit ends in exactly one `finish()`**, which (in order)
+  adds tokens to the budget counter, releases the concurrency slot, and queues the row.
+- **JSONB columns use `none_as_null`**, so a missing value is SQL `NULL`, not JSON `null`
+  (found by a test: `WHERE redaction_counts IS NULL` would have missed those rows).
 - **Future work:** a retention policy (monthly partitions or a 90-day cleanup job).
 
 ---

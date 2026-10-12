@@ -42,6 +42,19 @@ def run_sql(sql: str, *args) -> None:
     asyncio.run(run())
 
 
+def fetch_rows(sql: str, *args) -> list[dict]:
+    """Read rows from the test database, outside the app."""
+
+    async def run():
+        connection = await asyncpg.connect(TEST_DATABASE_URL.replace("+asyncpg", ""))
+        try:
+            return [dict(row) for row in await connection.fetch(sql, *args)]
+        finally:
+            await connection.close()
+
+    return asyncio.run(run())
+
+
 def create_key(client, **fields) -> dict:
     """Create an API key through the admin API and return the response body (including the key)."""
     response = client.post("/admin/keys", json={"team_name": "team-a", **fields}, headers=ADMIN_HEADERS)

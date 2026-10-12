@@ -17,7 +17,7 @@ def migrated_database():
 
 @pytest.fixture(autouse=True)
 def clean_state():
-    run_sql("TRUNCATE api_keys")
+    run_sql("TRUNCATE requests, api_keys")
     with redis.Redis.from_url(TEST_REDIS_URL) as client:
         client.flushdb()
 

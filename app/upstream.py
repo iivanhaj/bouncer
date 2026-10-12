@@ -2,6 +2,7 @@ import asyncio
 import json
 import time
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from typing import Any
 
 import anyio
@@ -84,15 +85,40 @@ def _sse_error(message: str, code: str) -> bytes:
     return f"data: {json.dumps(body)}\n\n".encode()
 
 
-def _is_usage_only_event(event: list[str]) -> bool:
-    """True for the extra chunk carrying only token usage (sent when include_usage is on)."""
+@dataclass
+class StreamStats:
+    """What the relay saw, for usage logging. Filled in as events pass through."""
+
+    first_token_at: float | None = None
+    content_chunks: int = 0
+    content_bytes: int = 0
+    usage: dict[str, Any] | None = None
+    # "completed", "upstream_error" or "upstream_timeout". Still None if the client went away.
+    outcome: str | None = None
+
+
+def _inspect_event(event: list[str], stats: StreamStats) -> bool:
+    """Update stats from one SSE event. Returns True if it is the usage-only chunk."""
     for line in event:
-        if line.startswith("data:") and '"usage"' in line:
-            try:
-                chunk = json.loads(line[len("data:"):])
-            except ValueError:
-                return False
-            return chunk.get("choices") == [] and chunk.get("usage") is not None
+        if not line.startswith("data:") or line == "data: [DONE]":
+            continue
+        try:
+            chunk = json.loads(line[len("data:"):])
+        except ValueError:
+            return False
+        if not isinstance(chunk, dict):
+            return False
+        if isinstance(chunk.get("usage"), dict):
+            stats.usage = chunk["usage"]
+        choices = chunk.get("choices") or []
+        if choices and isinstance(choices[0], dict):
+            content = (choices[0].get("delta") or {}).get("content")
+            if content:
+                if stats.first_token_at is None:
+                    stats.first_token_at = time.monotonic()
+                stats.content_chunks += 1
+                stats.content_bytes += len(content.encode())
+        return chunk.get("choices") == [] and chunk.get("usage") is not None
     return False
 
 
@@ -103,21 +129,31 @@ async def relay_stream(
     first_token_timeout: float,
     chunk_timeout: float,
     total_timeout: float,
+    stats: StreamStats | None = None,
 ) -> AsyncIterator[bytes]:
     """Relay upstream SSE events to the client, one complete event at a time.
 
-    Events are passed through as the upstream wrote them; lines are only inspected to find
-    the usage-only chunk. Any failure after streaming has started is sent as a final SSE error
-    event, because the 200 status has already gone out.
+    Events are passed through as the upstream wrote them; they are only parsed to collect
+    stats and to find the usage-only chunk. Any failure after streaming has started is sent as
+    a final SSE error event, because the 200 status has already gone out.
     """
+    stats = stats if stats is not None else StreamStats()
     deadline = time.monotonic() + total_timeout
     wait = first_token_timeout
     lines = response.aiter_lines()
     event: list[str] = []
+
+    def forward(event: list[str]) -> bytes | None:
+        is_usage_only = _inspect_event(event, stats)
+        if client_wants_usage or not is_usage_only:
+            return ("\n".join(event) + "\n\n").encode()
+        return None
+
     try:
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
+                stats.outcome = "upstream_timeout"
                 yield _sse_error("The response took too long", "upstream_timeout")
                 return
             # Only the read is wrapped in a timeout, never the yield: a timeout around a yield
@@ -128,6 +164,7 @@ async def relay_stream(
             except StopAsyncIteration:
                 break
             except TimeoutError:
+                stats.outcome = "upstream_timeout"
                 yield _sse_error("The model server stopped responding", "upstream_timeout")
                 return
             wait = chunk_timeout
@@ -136,13 +173,15 @@ async def relay_stream(
                 event.append(line)
                 continue
             # A blank line ends an SSE event.
-            if event and (client_wants_usage or not _is_usage_only_event(event)):
-                yield ("\n".join(event) + "\n\n").encode()
+            if event and (data := forward(event)):
+                yield data
             event = []
 
-        if event and (client_wants_usage or not _is_usage_only_event(event)):
-            yield ("\n".join(event) + "\n\n").encode()
+        if event and (data := forward(event)):
+            yield data
+        stats.outcome = "completed"
     except httpx.RequestError:
+        stats.outcome = "upstream_error"
         yield _sse_error("Lost connection to the model server", "upstream_error")
     finally:
         # Runs on success, error AND client disconnect (the server cancels this generator).
