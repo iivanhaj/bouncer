@@ -364,6 +364,10 @@ Index on (key_id, created_at). **No prompt text.**
   Checked by hand: when a client was cut off at 1.3 s, Ollama logged that request as
   ending after ~0.8 s with no `[DONE]` sent, so it stopped generating instead of finishing.
 - [ ] Can kind pods reach Ollama on the host? (week 3)
+  Docker Compose containers can: `host.docker.internal:11434` works from Docker Desktop.
+- [ ] **For the budget (week 2):** Ollama 0.4.1 reported `completion_tokens: 16` for
+  `max_tokens: 15`. Upstreams can exceed the cap by at least one token (likely the
+  end-of-sequence token), so the headroom formula needs a small per-request margin.
 
 ---
 

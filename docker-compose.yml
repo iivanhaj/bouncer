@@ -27,5 +27,54 @@ services:
       timeout: 3s
       retries: 15
 
+  # Runs the database migrations once, then exits. The gateway waits for it to succeed.
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    environment: &database-env
+      BOUNCER_DATABASE_URL: postgresql+asyncpg://bouncer:bouncer@postgres:5432/bouncer
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["app"]
+
+  gateway:
+    build: .
+    ports:
+      - "8000:8000"
+    # BOUNCER_ADMIN_TOKEN comes from .env. Everything that must point at other containers is set
+    # explicitly below, which overrides any localhost values a copied .env might contain.
+    env_file: .env
+    environment:
+      <<: *database-env
+      BOUNCER_REDIS_URL: redis://redis:6379/0
+      # Ollama runs natively on Windows; set to http://mock-upstream:8001 for load tests.
+      BOUNCER_UPSTREAM_BASE_URL: ${BOUNCER_UPSTREAM_BASE_URL:-http://host.docker.internal:11434}
+    extra_hosts:
+      # Already defined on Docker Desktop; this makes it work on Linux Docker too.
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    profiles: ["app"]
+
+  mock-upstream:
+    build: .
+    command: ["uvicorn", "mock_upstream.app:app", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "8001:8001"
+    environment:
+      MOCK_TTFT_MS: "100"
+      MOCK_TOKEN_DELAY_MS: "10"
+      MOCK_COMPLETION_TOKENS: "20"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    profiles: ["app"]
+
 volumes:
   postgres-data:
