@@ -60,6 +60,9 @@ class Settings(DatabaseSettings):
     injection_threshold: float = Field(default=1.0, gt=0)
     # Second layer behind the rules (app/injection_model.py). Block if either fires.
     injection_classifier: bool = True
+    # "monitor": log what the classifier alone would block, without blocking. Its false positives
+    # are measured on public data; on your own traffic, check them in monitor mode first.
+    injection_classifier_mode: Literal["block", "monitor"] = "block"
 
     # Extra tokens per request in the budget headroom: upstreams can report a token or so past
     # max_tokens (DESIGN.md §2).

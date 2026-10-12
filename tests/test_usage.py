@@ -17,7 +17,9 @@ from app.main import create_app
 from app.usage import UsageRecord, UsageRecorder
 from tests.helpers import TEST_DATABASE_URL, TEST_REDIS_URL, UPSTREAM_URL, create_key, fetch_rows, make_settings
 
-PROMPT = "my secret prompt text"
+# Any honest prompt; the tests check its text is never stored. (A terse "my secret prompt text"
+# looked like a prompt-extraction request to the classifier, which is fair.)
+PROMPT = "Draft a short reply to Priya confirming the Thursday budget review"
 CHAT = {"model": "m", "messages": [{"role": "user", "content": PROMPT}]}
 COMPLETION = {
     "choices": [{"index": 0, "message": {"role": "assistant", "content": "the secret answer"}}],

@@ -271,21 +271,25 @@ or content the apps pass along (web pages, documents, tool output).
   labels popular persona prompts as injections; blocking them would break normal use), and
   pure topic hijacks ("Write why newspaper X is the best"), which no text pattern can tell
   apart from a real request without knowing what the app is for.
-- **Second layer: a small classifier** (`app/injection_model.py`, week 3). TF-IDF features
-  (word 1-2 grams and character 3-5 grams, so English and German both work) into a logistic
-  regression, trained only on dev data (public dev split + hand-written cases). The threshold
-  comes from 5-fold cross-validation on dev: the most injections caught with dev false positives
-  at or below 1% (chosen: 0.84, CV recall 51%, CV false positives 0.76%). A request is blocked if
-  either the rules or the classifier fire; the classifier logs as rule `ml-classifier`.
+- **Second layer: a small classifier** (`app/injection_model.py`). TF-IDF features (word 1-2
+  grams and character 3-5 grams) into a logistic regression, trained on the dev splits of four
+  public datasets (deepset, jackhhao jailbreak, SPML, hand-written; 4,889 prompts). Threshold from
+  5-fold cross-validation at <=1% dev false positives. Blocks if the rules or the classifier fire;
+  logs as rule `ml-classifier`. Full results: `evals/RESULTS.md`.
 
-  | Held-out public test split | Catch rate | False positives |
+  | Held-out test set | Rules only | Rules + classifier |
   |---|---|---|
-  | Rules only | 14/60 (23%) | 0/56 |
-  | **Rules + classifier** | **29/60 (48%)** | **0/56** |
+  | deepset | 23% | 45% (0% FP) |
+  | jailbreak | 58% | 97% (0% FP) |
+  | SPML | 18% | 97% (0% FP) |
+  | Gandalf (never trained on) | 57% | 89% |
 
-  Caveats: training and test splits come from the same dataset, so real traffic will see less;
-  dev numbers (80% with the classifier) are training data and mean nothing. This was a
-  deliberate exception to SPEC's "no training models" non-goal, which was about LLMs.
+- **Why four datasets:** leave-one-dataset-out showed a classifier tuned to <=1% false positives
+  on one kind of honest text blocked 68% of a kind it had never seen. Diverse honest training
+  data was the fix. A multilingual embedding model and a 184M-parameter pretrained detector were
+  measured and not shipped (`evals/RESULTS.md`).
+- **Classifier monitor mode** (`injection_classifier_mode=monitor`): classifier-only hits are
+  logged, not blocked, so its false-positive rate can be checked on real traffic first.
 - **Stored as JSON, not pickle:** loading a pickle can execute code; the model file is just
   vocabularies, IDF weights, coefficients and the threshold.
 - **Capped input, found by measuring:** classifier cost grows with input size, 43 ms for a

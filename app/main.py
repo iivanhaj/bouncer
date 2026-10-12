@@ -65,7 +65,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     registry = ModelRegistry.load(settings.models_file, set(settings.upstreams))
     # Also loaded before startup: an invalid rules file must stop the gateway, not weaken it.
     classifier = InjectionClassifier.load() if settings.injection_classifier else None
-    injection = InjectionDetector(threshold=settings.injection_threshold, classifier=classifier)
+    injection = InjectionDetector(
+        threshold=settings.injection_threshold,
+        classifier=classifier,
+        classifier_blocks=settings.injection_classifier_mode == "block",
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):

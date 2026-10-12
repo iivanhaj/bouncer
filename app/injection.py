@@ -181,11 +181,20 @@ class Verdict:
 
 
 class InjectionDetector:
-    def __init__(self, threshold: float = 1.0, rules: list[Rule] | None = None, classifier: Classifier | None = None):
+    def __init__(
+        self,
+        threshold: float = 1.0,
+        rules: list[Rule] | None = None,
+        classifier: Classifier | None = None,
+        classifier_blocks: bool = True,
+    ):
         self.threshold = threshold
         self.rules = rules if rules is not None else load_rules()
         self._compiled = [(rule, rule.compiled()) for rule in self.rules]
         self.classifier = classifier
+        # False = monitor: classifier hits are logged (rule `ml-classifier`) but don't block, so its
+        # false-positive rate can be checked on real traffic before it is trusted.
+        self.classifier_blocks = classifier_blocks
 
     def matching_rules(self, text: str) -> set[str]:
         normalized = normalize(text)
@@ -216,5 +225,5 @@ class InjectionDetector:
             probability = round(max(self.classifier.probabilities(scanned)), 4)
             if probability >= self.classifier.threshold:
                 matched.add(CLASSIFIER_RULE)
-                blocked = True
+                blocked = blocked or self.classifier_blocks
         return Verdict(score=score, rules=sorted(matched), blocked=blocked, classifier_probability=probability)

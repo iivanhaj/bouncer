@@ -157,12 +157,21 @@ def test_measured_quality_does_not_regress():
 
 def test_classifier_layer_quality_does_not_regress():
     from app.injection_model import InjectionClassifier
+    from app.schemas import ChatMessage
+    from evals.injection_data import load_all
 
-    both = evaluate(PUBLIC_FILE, InjectionDetector(classifier=InjectionClassifier.load()))
-
-    # Held-out public test split with both layers (48.3% / 0.0% when measured).
-    assert both["test"].catch_rate >= 0.48
-    assert both["test"].false_positive_rate == 0.0
+    shipped = InjectionDetector(classifier=InjectionClassifier.load())
+    data = load_all()
+    # Held-out test splits, as measured for the shipped model (evals/RESULTS.md): recall floor per
+    # dataset, and zero false positives on every split that has honest prompts.
+    floors = {"deepset": 0.45, "jailbreak": 0.95, "spml": 0.95, "gandalf": 0.85}
+    for name, floor in floors.items():
+        cases = [c for c in data[name] if c.split == "test"]
+        flags = [shipped.scan([ChatMessage(role="user", content=c.text)]).blocked for c in cases]
+        caught = [f for f, c in zip(flags, cases, strict=True) if c.label == 1]
+        false_positives = [f for f, c in zip(flags, cases, strict=True) if c.label == 0]
+        assert sum(caught) / len(caught) >= floor, name
+        assert not any(false_positives), name
 
 
 # --- Through the gateway ---------------------------------------------------------------
