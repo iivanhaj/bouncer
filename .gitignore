@@ -19,3 +19,6 @@ htmlcov/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Benchmark caches (embeddings)
+evals/.cache/

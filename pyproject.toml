@@ -28,6 +28,13 @@ dev = [
     "pytest>=8.0",
     "respx>=0.21",
     "ruff==0.8.6",
+    # Only for evals/fetch_datasets.py (Hugging Face publishes datasets as Parquet).
+    "pyarrow>=17",
+]
+# Only for the injection benchmark's embedding comparison and the ProtectAI ceiling
+# (evals/injection_benchmark.py, evals/ceiling_protectai.py). Not needed by the gateway.
+research = [
+    "fastembed==0.7.4",
 ]
 
 [build-system]

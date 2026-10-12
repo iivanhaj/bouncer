@@ -1,0 +1,138 @@
+{
+  "in_distribution": {
+    "rules": {
+      "deepset": {
+        "recall": 0.23333333333333334,
+        "fp_rate": 0.0,
+        "n": "60+56"
+      },
+      "jailbreak": {
+        "recall": 0.5827338129496403,
+        "fp_rate": 0.0,
+        "n": "139+123"
+      },
+      "spml": {
+        "recall": 0.18022328548644337,
+        "fp_rate": 0.0,
+        "n": "627+174"
+      },
+      "gandalf": {
+        "recall": 0.57,
+        "fp_rate": null,
+        "n": "1000+0"
+      }
+    },
+    "rules+tfidf": {
+      "deepset": {
+        "recall": 0.45,
+        "fp_rate": 0.0,
+        "n": "60+56"
+      },
+      "jailbreak": {
+        "recall": 0.9712230215827338,
+        "fp_rate": 0.0,
+        "n": "139+123"
+      },
+      "spml": {
+        "recall": 0.9665071770334929,
+        "fp_rate": 0.0,
+        "n": "627+174"
+      },
+      "gandalf": {
+        "recall": 0.893,
+        "fp_rate": null,
+        "n": "1000+0"
+      }
+    },
+    "rules+embedding": {
+      "deepset": {
+        "recall": 0.4166666666666667,
+        "fp_rate": 0.017857142857142856,
+        "n": "60+56"
+      },
+      "jailbreak": {
+        "recall": 0.8129496402877698,
+        "fp_rate": 0.0,
+        "n": "139+123"
+      },
+      "spml": {
+        "recall": 0.8660287081339713,
+        "fp_rate": 0.0,
+        "n": "627+174"
+      },
+      "gandalf": {
+        "recall": 0.822,
+        "fp_rate": null,
+        "n": "1000+0"
+      }
+    }
+  },
+  "unseen": {
+    "rules": {
+      "deepset": {
+        "recall": 0.23333333333333334,
+        "fp_rate": 0.0,
+        "n": "60+56"
+      },
+      "jailbreak": {
+        "recall": 0.5827338129496403,
+        "fp_rate": 0.0,
+        "n": "139+123"
+      },
+      "spml": {
+        "recall": 0.18022328548644337,
+        "fp_rate": 0.0,
+        "n": "627+174"
+      },
+      "gandalf": {
+        "recall": 0.57,
+        "fp_rate": null,
+        "n": "1000+0"
+      }
+    },
+    "rules+tfidf": {
+      "deepset": {
+        "recall": 0.3333333333333333,
+        "fp_rate": 0.017857142857142856,
+        "n": "60+56"
+      },
+      "jailbreak": {
+        "recall": 0.9856115107913669,
+        "fp_rate": 0.6829268292682927,
+        "n": "139+123"
+      },
+      "spml": {
+        "recall": 0.38596491228070173,
+        "fp_rate": 0.0,
+        "n": "627+174"
+      },
+      "gandalf": {
+        "recall": 0.893,
+        "fp_rate": null,
+        "n": "1000+0"
+      }
+    },
+    "rules+embedding": {
+      "deepset": {
+        "recall": 0.2833333333333333,
+        "fp_rate": 0.0,
+        "n": "60+56"
+      },
+      "jailbreak": {
+        "recall": 0.8345323741007195,
+        "fp_rate": 0.3089430894308943,
+        "n": "139+123"
+      },
+      "spml": {
+        "recall": 0.22966507177033493,
+        "fp_rate": 0.0,
+        "n": "627+174"
+      },
+      "gandalf": {
+        "recall": 0.822,
+        "fp_rate": null,
+        "n": "1000+0"
+      }
+    }
+  }
+}

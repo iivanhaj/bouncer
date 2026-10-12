@@ -1,0 +1,26 @@
+{
+  "model": "protectai/deberta-v3-base-prompt-injection-v2",
+  "results": {
+    "deepset": {
+      "recall": 0.36666666666666664,
+      "fp_rate": 0.0,
+      "contaminated": false
+    },
+    "jailbreak": {
+      "recall": 0.841726618705036,
+      "fp_rate": 0.016260162601626018,
+      "contaminated": true
+    },
+    "spml": {
+      "recall": 0.988835725677831,
+      "fp_rate": 0.10919540229885058,
+      "contaminated": false
+    },
+    "gandalf": {
+      "recall": 1.0,
+      "fp_rate": null,
+      "contaminated": false
+    }
+  },
+  "median_ms": 25.834199972450733
+}
