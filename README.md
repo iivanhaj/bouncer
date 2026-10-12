@@ -24,10 +24,38 @@ its reasoning, and the loopholes it closes.
 
 ## How a request flows
 
+Each step can turn a request away; the status code it returns is on the arrow.
+
+```mermaid
+flowchart LR
+    C([Client<br/>OpenAI SDK]) --> L[Body size limit]
+    L -- 413 --> X((rejected))
+    L --> A[Auth<br/>SHA-256 key lookup]
+    A -- 401 --> X
+    A --> R[Rate limit<br/>sliding window]
+    R -- 429 --> X
+    R --> V[Validate<br/>fields, model allowlist]
+    V -- 400 / 404 --> X
+    V --> I[Injection check<br/>original text]
+    I -- 403 --> X
+    I --> P[Redact<br/>personal data, secrets]
+    P --> S[Concurrency slot]
+    S -- 429 --> X
+    S --> B[Budget check<br/>with headroom]
+    B -- 429 --> X
+    B --> U[Upstream<br/>Ollama or mock]
+    U -- stream --> C
+
+    R & S & B -.-> Redis[(Redis<br/>limits, slots,<br/>budget counters)]
+    A -.-> PG[(Postgres<br/>keys, usage log)]
+    U -. "finish(): count tokens,<br/>free slot, log row" .-> PG
 ```
-client ──Bearer key──▶ auth ─▶ rate limit ─▶ validate ─▶ concurrency slot ─▶ upstream (Ollama / mock)
-                        401       429           400            429              stream back ◀──
-```
+
+The pipeline order is deliberate (see [DESIGN.md](DESIGN.md)): cheap checks first; injection
+detection sees the original text before redaction; the concurrency slot is taken **before**
+the budget check and released **after** the tokens are counted, which is what makes the
+budget a hard limit. Metrics go to Prometheus on a separate internal port; raw prompts are
+never stored anywhere.
 
 ## Run the whole stack in Docker
 

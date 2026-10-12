@@ -165,3 +165,9 @@ def test_redis_down_fails_readiness_but_not_liveness(upstream):
     assert ready.json()["checks"] == {"postgres": True, "redis": False}
     # Liveness must stay up: a restart doesn't fix Redis, so failing it would only cause restarts.
     assert alive.status_code == 200
+
+
+def test_sniffio_is_installed_so_httpcore_does_not_retry_a_failing_import_per_request():
+    """Performance guard (loadtest/RESULTS.md): without sniffio, httpcore's async-library check
+    retries a failing import on every lock it creates, which cost 7% of CPU under load."""
+    import sniffio  # noqa: F401
