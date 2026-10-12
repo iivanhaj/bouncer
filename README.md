@@ -21,7 +21,7 @@ its reasoning, and the loopholes it closes.
 | CI: lint, tests against Postgres + Redis, evaluations, dashboard build, Docker builds | ✅ |
 | Prometheus metrics (separate internal port), readiness probe | ✅ |
 | Load-test numbers and profiling ([loadtest/RESULTS.md](loadtest/RESULTS.md)) | ✅ |
-| Kubernetes (kind) | In progress |
+| Kubernetes (kind): 2 replicas sharing limits, ingress exposing only `/v1` | ✅ |
 
 ## How a request flows
 
@@ -88,6 +88,18 @@ reach it on a remote machine, use an SSH tunnel or `kubectl port-forward`, never
 
 To work on it locally: `cd dashboard`, `npm install`, then
 `BOUNCER_ADMIN_TOKEN=... GATEWAY_URL=http://localhost:8000 npm run dev`.
+
+## Kubernetes (kind)
+
+```bash
+bash k8s/setup.sh
+```
+
+Creates a local kind cluster, installs the nginx ingress, builds and loads the images, creates
+secrets from `.env` and deploys: Postgres, Redis, the mock upstream, **two gateway replicas**
+(limits shared through Redis; migrations under a Postgres advisory lock), the dashboard and
+Prometheus. Only `/v1` is exposed, at http://localhost:8080; the dashboard and Prometheus are
+reached with `kubectl -n bouncer port-forward`.
 
 ## Use it
 

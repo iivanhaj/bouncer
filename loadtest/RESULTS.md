@@ -74,6 +74,28 @@ machine and was discarded.)
 So the profiler found real waste, the measurement showed it wasn't the bottleneck, and the fix
 stays (it is free and helps p95 near the limit).
 
+## Kubernetes (kind): 2 gateway replicas
+
+A quick look rather than the full method: k6 ran as a pod inside the kind cluster against the
+in-cluster mock, directly and through the gateway service (2 replicas), one 15 s run per point.
+
+| Rate | Mock direct p95 | Gateway p50 / p95 (overhead) | Achieved |
+|---|---|---|---|
+| 100/s | 293 ms | 309 / 328 ms (+17 / +34 ms) | 98/s |
+| 200/s | 293 ms | 1.8 s / 7.2 s | 144/s |
+| 400/s | 292 ms | 5.8 s / 14.9 s | 150/s |
+
+- At 100 req/s, two replicas clearly beat one process: +34 ms p95 overhead against +81 ms.
+- Capacity did **not** double (~150 req/s). Both pods, k6, Postgres, Redis and the mock all run
+  inside one kind node on one laptop, so replicas spread the work without adding CPU. Finding
+  the shared limit (node CPU, Postgres, Redis) is the next investigation.
+
+Also verified in the cluster: pods reach Ollama on the Windows host (`host.docker.internal`),
+streaming through the nginx ingress is not buffered (first chunk at 0.48 s of a 0.94 s
+generation), the admin API is not reachable through the ingress (404), two replicas enforce one
+shared rate limit (exactly 5 of 10 requests allowed across both pods with a 5/min key), and
+Prometheus scrapes each pod separately.
+
 ## What's next
 
 - The remaining ceiling is httpcore's pool bookkeeping plus a single Python process. Options:

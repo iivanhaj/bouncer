@@ -473,13 +473,14 @@ Index on (key_id, created_at). **No prompt text.**
 
 ## To verify while building
 - [x] Does Ollama's OpenAI-compatible API send usage when streaming (`include_usage`)?
-  **No, on Ollama 0.4.1**: the option is ignored and no usage chunk is sent. The
-  estimate fallback (`usage_estimated = true`) is required. Re-test after upgrading Ollama.
+  **No on 0.4.1** (the option was ignored, so streamed rows were estimates). **Yes on 0.40.3**
+  (re-tested in week 3: 37 prompt / 25 completion tokens reported). The estimate fallback stays
+  for upstreams that don't report usage.
 - [x] Does a client disconnect stop the response and run the `finally` block?
   **Yes.** A unit test proves that closing the relay closes the upstream response.
   Checked by hand: when a client was cut off at 1.3 s, Ollama logged that request as
   ending after ~0.8 s with no `[DONE]` sent, so it stopped generating instead of finishing.
-- [ ] Can kind pods reach Ollama on the host? (week 3)
+- [x] Can kind pods reach Ollama on the host? **Yes**, via `host.docker.internal` on Docker Desktop.
   Docker Compose containers can: `host.docker.internal:11434` works from Docker Desktop.
 - [ ] **For the budget (week 2):** Ollama 0.4.1 reported `completion_tokens: 16` for
   `max_tokens: 15`. Upstreams can exceed the cap by at least one token (likely the
