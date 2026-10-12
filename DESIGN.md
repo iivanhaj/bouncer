@@ -254,7 +254,7 @@ or content the apps pass along (web pages, documents, tool output).
 
   | Data | Catch rate | False positives |
   |---|---|---|
-  | **Public test (held out)** | **15/60 (25%)** | **0/56 (0%)** |
+  | **Public test (held out)** | **14/60 (23%)** | **0/56 (0%)** |
   | Public dev (deepset's train split) | 73/203 (36%) | 0/343 (0%) |
   | Hand-written "test" | 20/25 (80%) | 1/25 (4%) |
   | Hand-written "dev" | 25/25 (100%) | 0/25 |
@@ -264,7 +264,9 @@ or content the apps pass along (web pages, documents, tool output).
   the rules, so they were the attacks the rules expected. Rewriting against the public dev
   split (adding German rules, "forget everything before that", dropping previous tasks,
   praise-then-pivot, prompt-text extraction, ignore-the-documents for retrieval apps) took
-  the held-out number from 8% to 25% with no false positives.
+  the held-out number from 8% to 23% with no false positives. (A first version reached 25%,
+  but one of its German rules matched any mention of "prompt text" and blocked an honest
+  message in the test suite; narrowing it cost one held-out catch. 23% is the number to quote.)
 - **Deliberately not chased:** "I want you to act as a Linux terminal / debater" (the dataset
   labels popular persona prompts as injections; blocking them would break normal use), and
   pure topic hijacks ("Write why newspaper X is the best"), which no text pattern can tell
@@ -469,7 +471,7 @@ Answer each in one sentence, in your own words:
 16. Why is the request body size limit part of the budget's guarantee?
 17. Why does redaction check context (`(?<![\w-])`) as well as checksums?
 18. Name two quadratic-time problems found in the redaction code, and how they were fixed.
-19. Why did the rules score 80% on my own test set but 8% on a public one, and what does 25% with 0% false positives mean?
+19. Why did the rules score 80% on my own test set but 8% on a public one, and what does 23% with 0% false positives mean?
 20. Why does the 403 for a blocked prompt not say which rule matched?
 21. How does the dashboard keep the admin token out of the browser?
 22. Why does YAML read a key named `on` as `True`, and where did it bite this project?
