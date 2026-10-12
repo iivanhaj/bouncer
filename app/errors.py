@@ -1,10 +1,14 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 
-class GatewayError(Exception):
-    """An error returned to the client in OpenAI's error format, so OpenAI SDKs can parse it."""
+class GatewayError(HTTPException):
+    """An error returned to the client in OpenAI's error format, so OpenAI SDKs can parse it.
+
+    Subclasses HTTPException because FastAPI turns any other exception raised while reading the
+    request body into a generic 400; the body size limit raises this mid-read and needs its 413.
+    """
 
     def __init__(
         self,
@@ -14,7 +18,7 @@ class GatewayError(Exception):
         code: str | None = None,
         headers: dict[str, str] | None = None,
     ):
-        super().__init__(message)
+        super().__init__(status_code, detail=message, headers=headers)
         self.status_code = status_code
         self.message = message
         self.type = type_

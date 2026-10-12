@@ -8,6 +8,7 @@ import redis.asyncio as redis
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app.body_limit import BodySizeLimitMiddleware
 from app.concurrency import ConcurrencyLimiter
 from app.config import Settings, get_settings
 from app.errors import register_error_handlers
@@ -82,6 +83,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok"}
 
     register_error_handlers(app)
+    app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
     app.include_router(chat.router)
     app.include_router(admin.router)
 
