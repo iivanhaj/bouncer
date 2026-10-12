@@ -78,11 +78,13 @@ async def test_concurrent_acquires_cannot_exceed_the_limit():
 async def test_leaked_slots_heal_after_the_stale_age():
     """A crashed gateway never releases its slots. The stale cleanup must free them."""
     key = uuid.uuid4()
-    async with limiter(stale_seconds=0.3) as cl:
+    # Generous margins: Redis ages entries by the Docker VM clock, the test sleeps on the host clock,
+    # and a busy machine (e.g. a kind cluster running) can stretch both.
+    async with limiter(stale_seconds=1.0) as cl:
         await cl.acquire(key, 1, uuid.uuid4())  # never released, like after a crash
         with pytest.raises(GatewayError):
             await cl.acquire(key, 1, uuid.uuid4())
-        await asyncio.sleep(0.35)
+        await asyncio.sleep(1.2)
         await cl.acquire(key, 1, uuid.uuid4())
 
 

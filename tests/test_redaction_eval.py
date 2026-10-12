@@ -8,7 +8,7 @@ import pytest
 from app.redaction import find_spans
 from evals.redaction_eval import CASES_FILE, evaluate
 
-CASES = [json.loads(line) for line in CASES_FILE.read_text(encoding="utf-8").splitlines() if line.strip()]
+CASES = [json.loads(line) for line in CASES_FILE.read_text(encoding="utf-8").split("\n") if line.strip()]
 
 
 def test_overall_quality_does_not_regress():

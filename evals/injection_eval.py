@@ -43,7 +43,7 @@ class SplitReport:
 def evaluate(cases_file: Path = CASES_FILE, detector: InjectionDetector | None = None) -> dict[str, SplitReport]:
     detector = detector or InjectionDetector()
     reports: dict[str, SplitReport] = {}
-    for line in cases_file.read_text(encoding="utf-8").splitlines():
+    for line in cases_file.read_text(encoding="utf-8").split("\n"):
         if not line.strip():
             continue
         case = json.loads(line)

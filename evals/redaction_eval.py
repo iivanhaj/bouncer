@@ -47,7 +47,7 @@ class Report:
 def evaluate(cases_file: Path = CASES_FILE) -> Report:
     expected, caught, false_positives = Counter(), Counter(), Counter()
     clean_prompts = clean_flagged = total = 0
-    for line in cases_file.read_text(encoding="utf-8").splitlines():
+    for line in cases_file.read_text(encoding="utf-8").split("\n"):
         if not line.strip():
             continue
         case = json.loads(line)
