@@ -160,13 +160,49 @@ def test_upstream_5xx_becomes_502(client, upstream):
 
 
 def test_upstream_4xx_is_passed_through(client, upstream):
-    upstream_error = {"error": {"message": 'model "nope" not found', "type": "api_error"}}
+    # e.g. the model is in models.yaml but hasn't been pulled into Ollama.
+    upstream_error = {"error": {"message": 'model "qwen2.5:0.5b" not found, try pulling it first'}}
     upstream.post(UPSTREAM_URL).mock(return_value=httpx.Response(404, json=upstream_error))
 
-    response = client.post("/v1/chat/completions", json=chat_body(model="nope"))
+    response = client.post("/v1/chat/completions", json=chat_body())
 
     assert response.status_code == 404
-    assert response.json()["error"]["message"] == 'model "nope" not found'
+    assert response.json()["error"]["message"] == upstream_error["error"]["message"]
+
+
+# --- Model registry -----------------------------------------------------------
+
+
+def test_unknown_model_is_404_and_never_reaches_upstream(client, upstream):
+    route = upstream.post(UPSTREAM_URL).mock(return_value=httpx.Response(200, json=COMPLETION))
+
+    response = client.post("/v1/chat/completions", json=chat_body(model="gpt-unlisted"))
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "model_not_found"
+    assert not route.called
+
+
+def test_public_model_name_is_mapped_to_upstream_name(client, upstream):
+    route = upstream.post(UPSTREAM_URL).mock(return_value=httpx.Response(200, json=COMPLETION))
+
+    client.post("/v1/chat/completions", json=chat_body(model="aliased"))
+
+    assert sent_payload(route)["model"] == "real-upstream-name"
+
+
+def test_list_models_returns_the_allowlist(client):
+    response = client.get("/v1/models")
+
+    assert response.status_code == 200
+    assert response.json()["object"] == "list"
+    assert {m["id"] for m in response.json()["data"]} == {"m", "qwen2.5:0.5b", "aliased"}
+
+
+def test_list_models_requires_a_key(client):
+    response = client.get("/v1/models", headers={"Authorization": ""})
+
+    assert response.status_code == 401
 
 
 def test_upstream_invalid_json_becomes_502(client, upstream):

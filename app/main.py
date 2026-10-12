@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.concurrency import ConcurrencyLimiter
 from app.config import Settings, get_settings
 from app.errors import register_error_handlers
+from app.models_registry import ModelRegistry
 from app.ratelimit import RateLimiter
 from app.routes import admin, chat
 
@@ -28,20 +29,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings, so the "refuse to start without a strong ADMIN_TOKEN" check only runs on startup.
     """
     settings = settings or get_settings()
+    # Loaded before startup so a broken models.yaml stops the gateway immediately.
+    registry = ModelRegistry.load(settings.models_file, set(settings.upstreams))
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        # One shared client for the whole app, so connections to the upstream are pooled and reused.
-        app.state.http_client = httpx.AsyncClient(
-            base_url=settings.upstream_base_url,
-            verify=_ssl_context(),
-            timeout=httpx.Timeout(
-                connect=settings.upstream_connect_timeout,
-                read=settings.upstream_read_timeout,
-                write=10.0,
-                pool=5.0,
-            ),
-        )
+        # One shared client per upstream for the whole app, so connections are pooled and reused.
+        app.state.upstream_clients = {
+            name: httpx.AsyncClient(
+                base_url=base_url,
+                verify=_ssl_context(),
+                timeout=httpx.Timeout(
+                    connect=settings.upstream_connect_timeout,
+                    read=settings.upstream_read_timeout,
+                    write=10.0,
+                    pool=5.0,
+                ),
+            )
+            for name, base_url in settings.upstreams.items()
+        }
         engine = create_async_engine(settings.database_url, pool_pre_ping=True)
         app.state.sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
         redis_timeout = settings.redis_timeout_ms / 1000
@@ -51,12 +57,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.rate_limiter = RateLimiter(redis_client, settings.rate_limit_window_seconds)
         app.state.concurrency = ConcurrencyLimiter(redis_client, settings.concurrency_stale_seconds)
         yield
-        await app.state.http_client.aclose()
+        for client in app.state.upstream_clients.values():
+            await client.aclose()
         await engine.dispose()
         await redis_client.aclose()
 
     app = FastAPI(title="Bouncer", lifespan=lifespan)
     app.state.settings = settings
+    app.state.models = registry
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:

@@ -17,7 +17,7 @@ RUN mkdir app mock_upstream && touch app/__init__.py mock_upstream/__init__.py \
 COPY app ./app
 COPY mock_upstream ./mock_upstream
 COPY migrations ./migrations
-COPY alembic.ini ./
+COPY alembic.ini models.yaml ./
 RUN pip install --no-deps .
 
 # Never run as root inside the container.

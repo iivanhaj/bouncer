@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -27,7 +28,11 @@ class Settings(DatabaseSettings):
     redis_timeout_ms: int = 100
     rate_limit_window_seconds: float = 60.0
 
-    upstream_base_url: str = "http://localhost:11434"
+    # Upstream name -> base URL. Set as JSON in the environment, e.g.
+    # BOUNCER_UPSTREAMS='{"ollama": "http://host.docker.internal:11434", "mock": "http://mock-upstream:8001"}'
+    upstreams: dict[str, str] = {"ollama": "http://localhost:11434", "mock": "http://localhost:8001"}
+    # Which models exist and which upstream serves each one (the model allowlist).
+    models_file: Path = Path("models.yaml")
     upstream_connect_timeout: float = 5.0
     # Non-streaming: nothing arrives until generation is done, so this covers the whole generation.
     upstream_read_timeout: float = 300.0

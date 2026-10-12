@@ -1,0 +1,17 @@
+models:
+  m:
+    upstream: test
+    upstream_model: m
+    input_price_per_1k: 1.0
+    output_price_per_1k: 2.0
+  qwen2.5:0.5b:
+    upstream: test
+    upstream_model: qwen2.5:0.5b
+    input_price_per_1k: 0.0
+    output_price_per_1k: 0.0
+  # Public name differs from the upstream's name, to test the mapping.
+  aliased:
+    upstream: test
+    upstream_model: real-upstream-name
+    input_price_per_1k: 0.0
+    output_price_per_1k: 0.0

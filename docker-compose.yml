@@ -48,8 +48,9 @@ services:
     environment:
       <<: *database-env
       BOUNCER_REDIS_URL: redis://redis:6379/0
-      # Ollama runs natively on Windows; set to http://mock-upstream:8001 for load tests.
-      BOUNCER_UPSTREAM_BASE_URL: ${BOUNCER_UPSTREAM_BASE_URL:-http://host.docker.internal:11434}
+      # Ollama runs natively on Windows; the mock runs in its own container. Which model goes
+      # to which upstream is decided by models.yaml.
+      BOUNCER_UPSTREAMS: '{"ollama": "http://host.docker.internal:11434", "mock": "http://mock-upstream:8001"}'
     extra_hosts:
       # Already defined on Docker Desktop; this makes it work on Linux Docker too.
       - "host.docker.internal:host-gateway"
@@ -57,6 +58,8 @@ services:
       migrate:
         condition: service_completed_successfully
       redis:
+        condition: service_healthy
+      mock-upstream:
         condition: service_healthy
     profiles: ["app"]
 

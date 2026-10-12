@@ -5,6 +5,8 @@ from fastapi.responses import StreamingResponse
 from starlette.background import BackgroundTask, BackgroundTasks
 
 from app import upstream
+from app.auth import require_api_key
+from app.models import ApiKey
 from app.ratelimit import Admission, enforce_rate_limit
 from app.schemas import ChatCompletionRequest
 
@@ -18,6 +20,18 @@ SSE_HEADERS = {
 }
 
 
+@router.get("/v1/models")
+async def list_models(request: Request, api_key: ApiKey = Depends(require_api_key)) -> dict[str, Any]:
+    """The models this gateway routes to, in OpenAI's format."""
+    return {
+        "object": "list",
+        "data": [
+            {"id": name, "object": "model", "created": 0, "owned_by": "bouncer"}
+            for name in request.app.state.models.models
+        ],
+    }
+
+
 @router.post("/v1/chat/completions", response_model=None)
 async def chat_completions(
     body: ChatCompletionRequest,
@@ -28,11 +42,15 @@ async def chat_completions(
     admission: Admission = Depends(enforce_rate_limit),
 ) -> dict[str, Any] | StreamingResponse:
     settings = request.app.state.settings
-    client = request.app.state.http_client
     headers = {"x-request-id": str(admission.request_id), **admission.rate_limit.headers()}
+
+    # The allowlist: unknown models are rejected before any upstream is contacted.
+    route = request.app.state.models.resolve(body.model)
+    client = request.app.state.upstream_clients[route.upstream]
 
     # Later steps slot in here: injection check, redaction.
     payload = body.to_upstream_payload(settings.max_tokens_cap)
+    payload["model"] = route.upstream_model
 
     # Taken as late as possible, so slots are only held by requests about to reach the model.
     # From here on, every exit path must release it.

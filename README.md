@@ -37,12 +37,9 @@ docker compose --profile app up -d --build --wait
 ```
 
 This starts Postgres, Redis, the migrations, the gateway on http://localhost:8000 and the
-mock upstream on http://localhost:8001. The gateway talks to Ollama on the host by default.
-To point it at the mock instead (for load tests):
-
-```powershell
-$env:BOUNCER_UPSTREAM_BASE_URL="http://mock-upstream:8001"; docker compose --profile app up -d --wait gateway
-```
+mock upstream on http://localhost:8001. [models.yaml](models.yaml) decides which model goes
+where: `qwen2.5:0.5b` and `llama3.2:3b` go to Ollama on the host, and `mock` goes to the
+mock upstream (fast and predictable, for load tests). Models not listed are rejected.
 
 ## Use it
 
@@ -70,6 +67,7 @@ reply = client.chat.completions.create(model="qwen2.5:0.5b", messages=[{"role": 
 | Endpoint | Purpose |
 |---|---|
 | `POST /v1/chat/completions` | Chat, `stream: true` or `false` |
+| `GET /v1/models` | Models the gateway routes to |
 | `POST /admin/keys` | Create a key (returned once, stored as a SHA-256 hash) |
 | `GET /admin/keys` | List keys (display prefix only) |
 | `DELETE /admin/keys/{id}` | Revoke a key |

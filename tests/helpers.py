@@ -1,5 +1,6 @@
 import asyncio
 import os
+from pathlib import Path
 
 import asyncpg
 
@@ -13,6 +14,7 @@ ADMIN_TOKEN ="test-admin-token-0123456789abcdefghijklmnop"
 ADMIN_HEADERS = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
 UPSTREAM = "http://upstream.test"
 UPSTREAM_URL = f"{UPSTREAM}/v1/chat/completions"
+TEST_MODELS_FILE = Path(__file__).parent / "models.test.yaml"
 
 
 def make_settings(**overrides) -> Settings:
@@ -20,7 +22,8 @@ def make_settings(**overrides) -> Settings:
         "database_url": TEST_DATABASE_URL,
         "redis_url": TEST_REDIS_URL,
         "admin_token": ADMIN_TOKEN,
-        "upstream_base_url": UPSTREAM,
+        "upstreams": {"test": UPSTREAM},
+        "models_file": TEST_MODELS_FILE,
     }
     values.update(overrides)
     return Settings(**values)
