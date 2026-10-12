@@ -13,6 +13,7 @@ from app.budget import BudgetEnforcer
 from app.concurrency import ConcurrencyLimiter
 from app.config import Settings, get_settings
 from app.errors import register_error_handlers
+from app.injection import InjectionDetector
 from app.models_registry import ModelRegistry
 from app.ratelimit import RateLimiter
 from app.routes import admin, chat
@@ -34,6 +35,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     # Loaded before startup so a broken models.yaml stops the gateway immediately.
     registry = ModelRegistry.load(settings.models_file, set(settings.upstreams))
+    # Also loaded before startup: an invalid rules file must stop the gateway, not weaken it.
+    injection = InjectionDetector(threshold=settings.injection_threshold)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -78,6 +81,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="Bouncer", lifespan=lifespan)
     app.state.settings = settings
     app.state.models = registry
+    app.state.injection = injection
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:

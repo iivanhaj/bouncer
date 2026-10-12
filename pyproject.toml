@@ -30,7 +30,7 @@ build-backend = "setuptools.build_meta"
 include = ["app*", "mock_upstream*"]
 
 [tool.setuptools.package-data]
-app = ["lua/*.lua"]
+app = ["lua/*.lua", "injection_rules.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -244,6 +244,25 @@ or content the apps pass along (web pages, documents, tool output).
 - **Measurement:** injection set split 25 (for writing rules) / 25 (for
   reporting). The normal set includes hard cases ("how do I ignore errors in
   Python").
+- **Matched rules are logged even below the threshold** (`blocked_rules`, `injection_score`):
+  that is the data for tuning weights later. Monitor mode logs would-be blocks with the
+  request's normal status.
+- **Error responses carry `x-request-id`**, so the reference in a 403 matches the log row.
+- **Measured** (`python -m evals.injection_eval`; rules written against the dev half only,
+  test half run once and reported without tuning):
+
+  | Split | Catch rate | False positives |
+  |---|---|---|
+  | dev | 25/25 (100%) | 0/25 |
+  | **test** | **20/25 (80%)** | **1/25 (4%)** |
+
+  Test misses: a French injection (English-only rules), three near-misses scoring 0.5–0.9
+  (real signals, below the threshold). The false positive quotes the attack while asking how
+  to defend against it, the classic hard case for pattern rules. Caveat: the same person
+  wrote the rules and both halves; a public set such as `deepset/prompt-injections` makes a
+  more independent test half.
+- **YAML trap found while building:** a rule field named `on` was read as the boolean `True`
+  (YAML 1.1). Renamed to `form`.
 - **Stated limitations:** English-only rules. A heuristic layer, not a
   complete defense. The real defense is giving the model's tools minimal
   access and never trusting model output.

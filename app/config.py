@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -50,6 +51,11 @@ class Settings(DatabaseSettings):
     usage_queue_size: int = 10_000
     usage_batch_size: int = 100
     usage_flush_interval_seconds: float = 1.0
+
+    # Prompt-injection detection (DESIGN.md §4). "monitor" logs what would have been blocked
+    # without blocking, for trying new rules on real traffic safely.
+    injection_mode: Literal["block", "monitor"] = "block"
+    injection_threshold: float = Field(default=1.0, gt=0)
 
     # Extra tokens per request in the budget headroom: upstreams can report a token or so past
     # max_tokens (DESIGN.md §2).

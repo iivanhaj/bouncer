@@ -97,7 +97,20 @@ async def chat_completions(
         record.upstream, record.route = route.upstream, route
         client = state.upstream_clients[route.upstream]
 
-        # Later step slots in here: injection check (on the original text, before redaction).
+        # Injection check on the ORIGINAL text, before redaction (DESIGN.md §4): blocked requests
+        # skip the redaction work, and the detector sees exactly what the attacker wrote.
+        # Matched rules are logged even below the threshold: that's the data for tuning rules.
+        verdict = state.injection.scan(body.messages)
+        if verdict.rules:
+            record.blocked_rules, record.injection_score = verdict.rules, verdict.score
+        if verdict.blocked and settings.injection_mode == "block":
+            # Generic on purpose: naming the matched rule would help an attacker iterate.
+            raise GatewayError(
+                403,
+                f"This request was blocked by the gateway's security policy. Reference: {admission.request_id}",
+                "invalid_request_error",
+                "prompt_blocked",
+            )
 
         # Redact personal data and secrets before anything leaves the gateway. Only the counts
         # per category are kept; the values and the placeholder mapping are never stored.
@@ -130,6 +143,8 @@ async def chat_completions(
         streaming = True
     except GatewayError as error:
         record.status = status_for(error)
+        # Errors carry the request id too, so a failed request can be matched to its log row.
+        error.headers = {**headers, **(error.headers or {})}
         raise
     except BaseException:
         record.status = "error"

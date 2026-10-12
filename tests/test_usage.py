@@ -221,3 +221,13 @@ async def test_database_errors_do_not_kill_the_writer():
     assert recorder.dropped == 1
     assert await count_rows(engine) == 1
     await engine.dispose()
+
+
+def test_error_responses_carry_the_request_id(upstream):
+    upstream.mock(return_value=httpx.Response(500))
+
+    (response,), _ = run_requests(CHAT)
+
+    assert response.status_code == 502
+    [row] = rows()
+    assert response.headers["x-request-id"] == str(row["id"])
