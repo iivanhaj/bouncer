@@ -15,8 +15,8 @@ its reasoning, and the loopholes it closes.
 | Hashed per-team API keys, admin API (create / list / revoke, optional expiry) | ✅ |
 | Sliding-window rate limit (Redis + Lua), per-key concurrency limit | ✅ |
 | Docker Compose stack with a mock upstream for load tests | ✅ |
-| Usage logging, monthly token budgets | Week 2 |
-| Redaction of personal data, prompt-injection blocking | Week 2 |
+| Usage logging, monthly token budgets with headroom | ✅ |
+| Redaction of personal data and secrets, prompt-injection blocking | ✅ |
 | Dashboard, CI, Prometheus metrics, Kubernetes, load-test numbers | Weeks 2–3 |
 
 ## How a request flows
@@ -71,6 +71,8 @@ reply = client.chat.completions.create(model="qwen2.5:0.5b", messages=[{"role": 
 | `POST /admin/keys` | Create a key (returned once, stored as a SHA-256 hash) |
 | `GET /admin/keys` | List keys (display prefix only) |
 | `DELETE /admin/keys/{id}` | Revoke a key |
+| `GET /admin/usage?days=7&bucket=day` | Tokens, cost, latency (avg, p95, time to first token) and outcomes per key, plus a time series |
+| `GET /admin/blocked` | Requests blocked by injection detection (or that would have been, in monitor mode): rule ids and scores only |
 | `GET /healthz` | Liveness |
 
 ## Develop locally

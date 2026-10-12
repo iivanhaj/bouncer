@@ -16,7 +16,7 @@ from app.errors import register_error_handlers
 from app.injection import InjectionDetector
 from app.models_registry import ModelRegistry
 from app.ratelimit import RateLimiter
-from app.routes import admin, chat
+from app.routes import admin, admin_usage, chat
 from app.usage import UsageRecorder
 
 
@@ -92,5 +92,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
     app.include_router(chat.router)
     app.include_router(admin.router)
+    app.include_router(admin_usage.router)
 
     return app
