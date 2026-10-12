@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     # Non-streaming: nothing arrives until generation is done, so this covers the whole generation.
     upstream_read_timeout: float = 300.0
 
+    # Streaming timeouts (DESIGN.md §5). A cold model has to load into RAM before its first token.
+    stream_first_token_timeout: float = 60.0
+    stream_chunk_timeout: float = 30.0
+    # Must stay below the concurrency cleanup age (DESIGN.md §2).
+    stream_total_timeout: float = 300.0
+
     max_tokens_cap: int = 2048
 
 

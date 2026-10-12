@@ -116,6 +116,7 @@ def test_text_parts_are_accepted(client, upstream):
         pytest.param({"max_completion_tokens": CAP + 1}, id="max_completion_tokens over cap"),
         pytest.param({"max_tokens": 10, "max_completion_tokens": 20}, id="conflicting token limits"),
         pytest.param({"messages": []}, id="empty messages"),
+        pytest.param({"stream_options": {"include_usage": True}}, id="stream_options without stream"),
         pytest.param({"messages": [{"role": "hacker", "content": "hi"}]}, id="invalid role"),
         pytest.param(
             {"messages": [{"role": "user", "content": [{"type": "image_url", "image_url": {"url": "x"}}]}]},
@@ -130,16 +131,6 @@ def test_invalid_requests_return_400_and_never_reach_upstream(client, upstream, 
 
     assert response.status_code == 400
     assert response.json()["error"]["type"] == "invalid_request_error"
-    assert not route.called
-
-
-def test_streaming_is_rejected_for_now(client, upstream):
-    route = upstream.post(UPSTREAM_URL).mock(return_value=httpx.Response(200, json=COMPLETION))
-
-    response = client.post("/v1/chat/completions", json=chat_body(stream=True))
-
-    assert response.status_code == 501
-    assert response.json()["error"]["code"] == "stream_not_supported"
     assert not route.called
 
 

@@ -1,6 +1,6 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.errors import GatewayError
 
@@ -62,6 +62,16 @@ class ChatCompletionRequest(BaseModel):
     frequency_penalty: float | None = Field(default=None, ge=-2, le=2)
     response_format: ResponseFormat | None = None
 
+    @model_validator(mode="after")
+    def stream_options_need_stream(self) -> "ChatCompletionRequest":
+        if self.stream_options is not None and not self.stream:
+            raise ValueError("stream_options is only allowed when stream is true")
+        return self
+
+    @property
+    def client_wants_usage(self) -> bool:
+        return self.stream_options is not None and self.stream_options.include_usage
+
     def effective_max_tokens(self, cap: int) -> int:
         """The completion-token limit to send upstream: the client's value, or the cap if none given."""
         requested = [v for v in (self.max_tokens, self.max_completion_tokens) if v is not None]
@@ -88,4 +98,8 @@ class ChatCompletionRequest(BaseModel):
         payload = self.model_dump(exclude_none=True, exclude={"max_tokens", "max_completion_tokens", "n"})
         # Always send exactly one, older-style limit: every OpenAI-compatible server understands max_tokens.
         payload["max_tokens"] = self.effective_max_tokens(max_tokens_cap)
+        if self.stream:
+            # Always ask for usage so the gateway can count tokens; the relay strips the usage
+            # chunk again if the client didn't ask for it.
+            payload["stream_options"] = {"include_usage": True}
         return payload

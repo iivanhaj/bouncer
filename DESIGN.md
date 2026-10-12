@@ -351,8 +351,13 @@ Index on (key_id, created_at). **No prompt text.**
 ---
 
 ## To verify while building
-- [ ] Does Ollama's OpenAI-compatible API send usage when streaming (`include_usage`)? (step 2)
-- [ ] Does a client disconnect stop the response and run the `finally` block? Prove it with a test. (step 2)
+- [x] Does Ollama's OpenAI-compatible API send usage when streaming (`include_usage`)?
+  **No, on Ollama 0.4.1**: the option is ignored and no usage chunk is sent. The
+  estimate fallback (`usage_estimated = true`) is required. Re-test after upgrading Ollama.
+- [x] Does a client disconnect stop the response and run the `finally` block?
+  **Yes.** A unit test proves that closing the relay closes the upstream response.
+  Checked by hand: when a client was cut off at 1.3 s, Ollama logged that request as
+  ending after ~0.8 s with no `[DONE]` sent, so it stopped generating instead of finishing.
 - [ ] Can kind pods reach Ollama on the host? (week 3)
 
 ---
