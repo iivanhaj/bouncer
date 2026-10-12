@@ -5,11 +5,9 @@ import pytest
 import respx
 from fastapi.testclient import TestClient
 
-from app.config import Settings
 from app.main import create_app
+from tests.helpers import UPSTREAM_URL, create_key, make_settings
 
-UPSTREAM = "http://upstream.test"
-UPSTREAM_URL = f"{UPSTREAM}/v1/chat/completions"
 CAP = 100
 
 COMPLETION = {
@@ -30,8 +28,9 @@ def chat_body(**overrides):
 
 @pytest.fixture
 def client():
-    app = create_app(Settings(upstream_base_url=UPSTREAM, max_tokens_cap=CAP))
+    app = create_app(make_settings(max_tokens_cap=CAP))
     with TestClient(app) as test_client:
+        test_client.headers["Authorization"] = f"Bearer {create_key(test_client)['key']}"
         yield test_client
 
 
@@ -82,11 +81,8 @@ def test_max_completion_tokens_is_sent_as_max_tokens(client, upstream):
 def test_client_headers_are_not_forwarded(client, upstream):
     route = upstream.post(UPSTREAM_URL).mock(return_value=httpx.Response(200, json=COMPLETION))
 
-    client.post(
-        "/v1/chat/completions",
-        json=chat_body(),
-        headers={"Authorization": "Bearer bnc_secret", "X-Custom": "leak"},
-    )
+    # The client fixture already sends a real bnc_ key in Authorization.
+    client.post("/v1/chat/completions", json=chat_body(), headers={"X-Custom": "leak"})
 
     sent_headers = route.calls.last.request.headers
     assert "authorization" not in sent_headers

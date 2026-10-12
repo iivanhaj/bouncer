@@ -7,11 +7,8 @@ import respx
 from fastapi.testclient import TestClient
 
 from app import upstream as upstream_module
-from app.config import Settings
 from app.main import create_app
-
-UPSTREAM = "http://upstream.test"
-UPSTREAM_URL = f"{UPSTREAM}/v1/chat/completions"
+from tests.helpers import UPSTREAM_URL, create_key, make_settings
 
 
 def chunk(content: str) -> str:
@@ -59,17 +56,13 @@ def events(text: str) -> list[str]:
 
 @pytest.fixture
 def settings():
-    return Settings(
-        upstream_base_url=UPSTREAM,
-        stream_first_token_timeout=1.0,
-        stream_chunk_timeout=0.2,
-        stream_total_timeout=2.0,
-    )
+    return make_settings(stream_first_token_timeout=1.0, stream_chunk_timeout=0.2, stream_total_timeout=2.0)
 
 
 @pytest.fixture
 def client(settings):
     with TestClient(create_app(settings)) as test_client:
+        test_client.headers["Authorization"] = f"Bearer {create_key(test_client)['key']}"
         yield test_client
 
 
@@ -199,6 +192,7 @@ def test_total_timeout_stops_a_slow_trickle(settings, upstream):
     upstream.post(UPSTREAM_URL).mock(return_value=sse_response(FakeStream(*pieces)))
 
     with TestClient(create_app(settings)) as client:
+        client.headers["Authorization"] = f"Bearer {create_key(client)['key']}"
         response = client.post("/v1/chat/completions", json=stream_body())
 
     assert last_event_error(response)["code"] == "upstream_timeout"
@@ -223,8 +217,3 @@ async def test_closing_the_relay_closes_the_upstream_response():
 
     assert first == chunk("one").encode()
     assert stream.closed
-
-
-@pytest.fixture
-def anyio_backend():
-    return "asyncio"

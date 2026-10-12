@@ -76,6 +76,11 @@ Optional expiry lets teams limit the lifetime of keys they might forget about.
 **Leak prevention:**
 - Keys are only accepted in the `Authorization` header, never in the URL.
 - Headers and request bodies are never logged.
+- Rejected settings are never echoed in startup errors (`hide_input_in_errors`).
+  Found while testing: Pydantic printed a too-short admin token in the error message.
+- The auth lookup uses its own short database session, not one held for the whole
+  request. A streaming response can last minutes, and holding a pooled connection
+  that long would let a few slow streams exhaust the pool.
 - TLS ends at the ingress in Kubernetes, and the README says so.
 - Brute force is pointless at 256 bits. Rate-limiting failed auth by IP is out
   of scope (the ingress's job).

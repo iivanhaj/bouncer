@@ -1,10 +1,12 @@
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from starlette.background import BackgroundTask
 
 from app import upstream
+from app.auth import require_api_key
+from app.models import ApiKey
 from app.schemas import ChatCompletionRequest
 
 router = APIRouter()
@@ -18,11 +20,15 @@ SSE_HEADERS = {
 
 
 @router.post("/v1/chat/completions", response_model=None)
-async def chat_completions(body: ChatCompletionRequest, request: Request) -> dict[str, Any] | StreamingResponse:
+async def chat_completions(
+    body: ChatCompletionRequest,
+    request: Request,
+    api_key: ApiKey = Depends(require_api_key),  # used by rate limiting in the next step
+) -> dict[str, Any] | StreamingResponse:
     settings = request.app.state.settings
     client = request.app.state.http_client
 
-    # Later steps slot in here: auth, rate limit, injection check, redaction, concurrency, budget.
+    # Later steps slot in here: rate limit, injection check, redaction, concurrency, budget.
     payload = body.to_upstream_payload(settings.max_tokens_cap)
 
     if not body.stream:
