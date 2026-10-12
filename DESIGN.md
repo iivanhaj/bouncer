@@ -345,7 +345,11 @@ or content the apps pass along (web pages, documents, tool output).
   `kubectl port-forward` only). It holds the admin token on its server and v1
   has no logins, so anyone who can reach it is the admin.
 - **Three pages:** keys (create, revoke, expiry), usage, blocked requests.
-- **Next.js, time-boxed to 2 days.** Fallback: server-rendered pages from FastAPI.
+- **Next.js (App Router).** Pages are server components that call the admin API; create and
+  revoke are server actions. The API client imports `server-only`, so the build fails if it is
+  ever pulled into browser code. Checked: the built browser bundles contain neither the token
+  nor the variable name. Charts are plain SVG, no chart library.
+- **Published on `127.0.0.1:3000` only** in Docker Compose, as a non-root user.
 - **`last_used_at`:** updated at most once a minute per key, or skipped in v1.
 - **Audit trail:** key creation and revocation are written to the structured log.
 

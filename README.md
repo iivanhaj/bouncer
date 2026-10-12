@@ -17,7 +17,9 @@ its reasoning, and the loopholes it closes.
 | Docker Compose stack with a mock upstream for load tests | ✅ |
 | Usage logging, monthly token budgets with headroom | ✅ |
 | Redaction of personal data and secrets, prompt-injection blocking | ✅ |
-| Dashboard, CI, Prometheus metrics, Kubernetes, load-test numbers | Weeks 2–3 |
+| Dashboard (keys, usage, blocked requests) | ✅ |
+| CI | Week 2 |
+| Prometheus metrics, Kubernetes, load-test numbers | Week 3 |
 
 ## How a request flows
 
@@ -40,6 +42,21 @@ This starts Postgres, Redis, the migrations, the gateway on http://localhost:800
 mock upstream on http://localhost:8001. [models.yaml](models.yaml) decides which model goes
 where: `qwen2.5:0.5b` and `llama3.2:3b` go to Ollama on the host, and `mock` goes to the
 mock upstream (fast and predictable, for load tests). Models not listed are rejected.
+
+## Dashboard
+
+Open http://127.0.0.1:3000 (started by the `app` profile above). Three pages:
+
+- **Keys**: create (the full key is shown once), revoke, limits, this month's budget bar, expiry.
+- **Usage**: tokens per day per key, cost, average and p95 latency, time to first token, errors.
+- **Blocked**: blocked and would-have-blocked requests, with rule ids and scores only.
+
+The dashboard holds the admin token on its server (it never reaches the browser), and since v1
+has no logins, anyone who can open it is the admin. So it is published on `127.0.0.1` only. To
+reach it on a remote machine, use an SSH tunnel or `kubectl port-forward`, never a public port.
+
+To work on it locally: `cd dashboard`, `npm install`, then
+`BOUNCER_ADMIN_TOKEN=... GATEWAY_URL=http://localhost:8000 npm run dev`.
 
 ## Use it
 

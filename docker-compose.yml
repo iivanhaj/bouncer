@@ -79,5 +79,20 @@ services:
       retries: 10
     profiles: ["app"]
 
+  # Admin dashboard. It holds the admin token and v1 has no logins, so anyone who can reach
+  # it is the admin (DESIGN.md §7): published on 127.0.0.1 only, never on the network.
+  dashboard:
+    build: ./dashboard
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GATEWAY_URL: http://gateway:8000
+      # Read from .env by Compose; stays on the dashboard's server, never sent to the browser.
+      BOUNCER_ADMIN_TOKEN: ${BOUNCER_ADMIN_TOKEN:?set BOUNCER_ADMIN_TOKEN in .env}
+    depends_on:
+      gateway:
+        condition: service_healthy
+    profiles: ["app"]
+
 volumes:
   postgres-data:
