@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import StreamingResponse
-from starlette.background import BackgroundTask
+from starlette.background import BackgroundTask, BackgroundTasks
 
 from app import upstream
 from app.ratelimit import Admission, enforce_rate_limit
@@ -31,25 +31,47 @@ async def chat_completions(
     client = request.app.state.http_client
     headers = {"x-request-id": str(admission.request_id), **admission.rate_limit.headers()}
 
-    # Later steps slot in here: injection check, redaction, concurrency, budget.
+    # Later steps slot in here: injection check, redaction.
     payload = body.to_upstream_payload(settings.max_tokens_cap)
 
-    if not body.stream:
-        response.headers.update(headers)
-        return await upstream.create_chat_completion(client, payload)
+    # Taken as late as possible, so slots are only held by requests about to reach the model.
+    # From here on, every exit path must release it.
+    slot = await request.app.state.concurrency.acquire(
+        admission.api_key.id, admission.api_key.max_concurrent, admission.request_id
+    )
+    # Later step slots in here: budget check (must come AFTER the slot, see DESIGN.md pipeline).
 
-    upstream_response = await upstream.open_chat_stream(client, payload, settings.stream_first_token_timeout)
+    if not body.stream:
+        try:
+            response.headers.update(headers)
+            return await upstream.create_chat_completion(client, payload)
+        finally:
+            await slot.release()
+
+    try:
+        upstream_response = await upstream.open_chat_stream(client, payload, settings.stream_first_token_timeout)
+    except BaseException:
+        await slot.release()
+        raise
+
+    async def relay_then_release():
+        try:
+            async for chunk in upstream.relay_stream(
+                upstream_response,
+                client_wants_usage=body.client_wants_usage,
+                first_token_timeout=settings.stream_first_token_timeout,
+                chunk_timeout=settings.stream_chunk_timeout,
+                total_timeout=settings.stream_total_timeout,
+            ):
+                yield chunk
+        finally:
+            await slot.release()
+
     return StreamingResponse(
-        upstream.relay_stream(
-            upstream_response,
-            client_wants_usage=body.client_wants_usage,
-            first_token_timeout=settings.stream_first_token_timeout,
-            chunk_timeout=settings.stream_chunk_timeout,
-            total_timeout=settings.stream_total_timeout,
-        ),
+        relay_then_release(),
         media_type="text/event-stream",
         headers={**SSE_HEADERS, **headers},
-        # Safety net: if the client disconnects before the relay even starts, its finally block
-        # never runs, so close the upstream response here too. Closing twice is harmless.
-        background=BackgroundTask(upstream_response.aclose),
+        # Safety net: if the client disconnects before the relay even starts, its finally blocks
+        # never run. Both cleanups are safe to run twice.
+        background=BackgroundTasks([BackgroundTask(upstream_response.aclose), BackgroundTask(slot.release)]),
     )

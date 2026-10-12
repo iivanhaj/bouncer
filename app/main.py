@@ -8,6 +8,7 @@ import redis.asyncio as redis
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app.concurrency import ConcurrencyLimiter
 from app.config import Settings, get_settings
 from app.errors import register_error_handlers
 from app.ratelimit import RateLimiter
@@ -48,6 +49,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             settings.redis_url, socket_timeout=redis_timeout, socket_connect_timeout=redis_timeout
         )
         app.state.rate_limiter = RateLimiter(redis_client, settings.rate_limit_window_seconds)
+        app.state.concurrency = ConcurrencyLimiter(redis_client, settings.concurrency_stale_seconds)
         yield
         await app.state.http_client.aclose()
         await engine.dispose()

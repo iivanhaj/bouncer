@@ -4,6 +4,7 @@ import time
 from collections.abc import AsyncIterator
 from typing import Any
 
+import anyio
 import httpx
 
 from app.errors import GatewayError
@@ -146,4 +147,6 @@ async def relay_stream(
     finally:
         # Runs on success, error AND client disconnect (the server cancels this generator).
         # Closing the upstream response tells the model server to stop generating.
-        await response.aclose()
+        # Shielded, because after a cancellation every unshielded await is cancelled too (see Slot.release).
+        with anyio.CancelScope(shield=True):
+            await response.aclose()
