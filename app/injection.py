@@ -25,6 +25,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -159,18 +160,32 @@ ENCODED_PAYLOAD_RULE = "encoded-payload"
 _ENCODED_PAYLOAD_WEIGHT = 0.5
 
 
+CLASSIFIER_RULE = "ml-classifier"
+
+
+class Classifier(Protocol):
+    """The second layer (app/injection_model.py). Passed in, so this module stays importable on its own."""
+
+    threshold: float
+
+    def probabilities(self, texts: list[str]) -> list[float]: ...
+
+
 @dataclass(frozen=True)
 class Verdict:
     score: float
     rules: list[str]
     blocked: bool
+    # Highest classifier probability across the scanned messages; None without a classifier.
+    classifier_probability: float | None = None
 
 
 class InjectionDetector:
-    def __init__(self, threshold: float = 1.0, rules: list[Rule] | None = None):
+    def __init__(self, threshold: float = 1.0, rules: list[Rule] | None = None, classifier: Classifier | None = None):
         self.threshold = threshold
         self.rules = rules if rules is not None else load_rules()
         self._compiled = [(rule, rule.compiled()) for rule in self.rules]
+        self.classifier = classifier
 
     def matching_rules(self, text: str) -> set[str]:
         normalized = normalize(text)
@@ -187,10 +202,19 @@ class InjectionDetector:
 
     def scan(self, messages: list[ChatMessage]) -> Verdict:
         matched: set[str] = set()
-        for message in messages:
-            if message.role != "system":
-                # Each message on its own, so phrases can't be assembled across message boundaries.
-                matched |= self.scan_text(message_text(message))
+        scanned = [message_text(m) for m in messages if m.role != "system"]
+        for text in scanned:
+            # Each message on its own, so phrases can't be assembled across message boundaries.
+            matched |= self.scan_text(text)
         weights = {rule.id: rule.weight for rule in self.rules} | {ENCODED_PAYLOAD_RULE: _ENCODED_PAYLOAD_WEIGHT}
         score = round(sum(weights[rule_id] for rule_id in matched), 2)
-        return Verdict(score=score, rules=sorted(matched), blocked=score >= self.threshold)
+        blocked = score >= self.threshold
+
+        # Second layer: block if either the rules or the classifier fire.
+        probability = None
+        if self.classifier is not None and scanned:
+            probability = round(max(self.classifier.probabilities(scanned)), 4)
+            if probability >= self.classifier.threshold:
+                matched.add(CLASSIFIER_RULE)
+                blocked = True
+        return Verdict(score=score, rules=sorted(matched), blocked=blocked, classifier_probability=probability)

@@ -19,6 +19,8 @@ dependencies = [
     "redis>=5.0",
     "pyyaml>=6.0",
     "prometheus-client>=0.20",
+    # The injection classifier (app/injection_model.py): TF-IDF + logistic regression.
+    "scikit-learn>=1.5",
 ]
 
 [project.optional-dependencies]
@@ -36,7 +38,7 @@ build-backend = "setuptools.build_meta"
 include = ["app*", "mock_upstream*"]
 
 [tool.setuptools.package-data]
-app = ["lua/*.lua", "injection_rules.yaml"]
+app = ["lua/*.lua", "injection_rules.yaml", "injection_model.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -16,11 +16,12 @@ its reasoning, and the loopholes it closes.
 | Sliding-window rate limit (Redis + Lua), per-key concurrency limit | ✅ |
 | Docker Compose stack with a mock upstream for load tests | ✅ |
 | Usage logging, monthly token budgets with headroom | ✅ |
-| Redaction of personal data and secrets, prompt-injection blocking | ✅ |
+| Redaction of personal data and secrets, prompt-injection blocking (rules + small classifier) | ✅ |
 | Dashboard (keys, usage, blocked requests) | ✅ |
 | CI: lint, tests against Postgres + Redis, evaluations, dashboard build, Docker builds | ✅ |
 | Prometheus metrics (separate internal port), readiness probe | ✅ |
-| Kubernetes, load-test numbers | Week 3 |
+| Load-test numbers and profiling ([loadtest/RESULTS.md](loadtest/RESULTS.md)) | ✅ |
+| Kubernetes (kind) | In progress |
 
 ## How a request flows
 

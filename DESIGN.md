@@ -271,6 +271,28 @@ or content the apps pass along (web pages, documents, tool output).
   labels popular persona prompts as injections; blocking them would break normal use), and
   pure topic hijacks ("Write why newspaper X is the best"), which no text pattern can tell
   apart from a real request without knowing what the app is for.
+- **Second layer: a small classifier** (`app/injection_model.py`, week 3). TF-IDF features
+  (word 1-2 grams and character 3-5 grams, so English and German both work) into a logistic
+  regression, trained only on dev data (public dev split + hand-written cases). The threshold
+  comes from 5-fold cross-validation on dev: the most injections caught with dev false positives
+  at or below 1% (chosen: 0.84, CV recall 51%, CV false positives 0.76%). A request is blocked if
+  either the rules or the classifier fire; the classifier logs as rule `ml-classifier`.
+
+  | Held-out public test split | Catch rate | False positives |
+  |---|---|---|
+  | Rules only | 14/60 (23%) | 0/56 |
+  | **Rules + classifier** | **29/60 (48%)** | **0/56** |
+
+  Caveats: training and test splits come from the same dataset, so real traffic will see less;
+  dev numbers (80% with the classifier) are training data and mean nothing. This was a
+  deliberate exception to SPEC's "no training models" non-goal, which was about LLMs.
+- **Stored as JSON, not pickle:** loading a pickle can execute code; the model file is just
+  vocabularies, IDF weights, coefficients and the threshold.
+- **Capped input, found by measuring:** classifier cost grows with input size, 43 ms for a
+  32 KB prompt, so maximum-size prompts would have been a cheap way to burn the single
+  process's CPU (~23 such requests a second saturate it). The classifier reads only the first
+  and last 4 KB of each message (worst case now ~9 ms); the rules still scan everything. Known
+  gap: an attack buried in the middle of a long prompt reaches only the rules.
 - **The honest framing:** rules are a cheap first layer with zero false positives that stops
   the obvious attacks. The next layer would be a small classifier model; the real defense
   remains architectural (least privilege for tools, never trusting model output).
@@ -423,7 +445,9 @@ or content the apps pass along (web pages, documents, tool output).
   under 50 ms. Run once with high-limit test keys and once with realistic
   limits.
 - **Before/after:** profile first. Candidates are the key cache and per-row
-  vs. batched logging; the measurement decides.
+  vs. batched logging; the measurement decides. **Done in week 3:** see `loadtest/RESULTS.md`.
+  The profiler pointed somewhere else entirely (httpcore: a failing per-request import and
+  connection-pool bookkeeping), and the fix helped p95 near the limit without raising capacity.
 
 ---
 

@@ -62,16 +62,27 @@ def evaluate(cases_file: Path = CASES_FILE, detector: InjectionDetector | None =
     return reports
 
 
+def detectors() -> dict[str, InjectionDetector]:
+    """Both layers, so their contributions can be compared on the same data."""
+    from app.injection_model import InjectionClassifier
+
+    return {
+        "rules only": InjectionDetector(),
+        "rules + classifier": InjectionDetector(classifier=InjectionClassifier.load()),
+    }
+
+
 def main() -> None:
-    detector = InjectionDetector()
-    for name, path in DATASETS.items():
-        print(name)
-        for split, report in sorted(evaluate(path, detector).items(), reverse=True):
-            label = f"{split} (held out)" if path == PUBLIC_FILE and split == "test" else split
-            print(
-                f"  [{label}] catch rate {report.caught}/{report.injections} ({report.catch_rate:.0%}), "
-                f"false positives {report.false_positives}/{report.benign} ({report.false_positive_rate:.0%})"
-            )
+    for detector_name, detector in detectors().items():
+        print(f"== {detector_name}")
+        for name, path in DATASETS.items():
+            print(name)
+            for split, report in sorted(evaluate(path, detector).items(), reverse=True):
+                label = f"{split} (held out)" if path == PUBLIC_FILE and split == "test" else split
+                print(
+                    f"  [{label}] catch rate {report.caught}/{report.injections} ({report.catch_rate:.0%}), "
+                    f"false positives {report.false_positives}/{report.benign} ({report.false_positive_rate:.0%})"
+                )
 
 
 if __name__ == "__main__":

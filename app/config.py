@@ -58,6 +58,8 @@ class Settings(DatabaseSettings):
     # without blocking, for trying new rules on real traffic safely.
     injection_mode: Literal["block", "monitor"] = "block"
     injection_threshold: float = Field(default=1.0, gt=0)
+    # Second layer behind the rules (app/injection_model.py). Block if either fires.
+    injection_classifier: bool = True
 
     # Extra tokens per request in the budget headroom: upstreams can report a token or so past
     # max_tokens (DESIGN.md §2).

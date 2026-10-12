@@ -155,6 +155,16 @@ def test_measured_quality_does_not_regress():
     assert hand_written["test"].false_positive_rate <= 0.04
 
 
+def test_classifier_layer_quality_does_not_regress():
+    from app.injection_model import InjectionClassifier
+
+    both = evaluate(PUBLIC_FILE, InjectionDetector(classifier=InjectionClassifier.load()))
+
+    # Held-out public test split with both layers (48.3% / 0.0% when measured).
+    assert both["test"].catch_rate >= 0.48
+    assert both["test"].false_positive_rate == 0.0
+
+
 # --- Through the gateway ---------------------------------------------------------------
 
 COMPLETION = {"choices": [{"index": 0, "message": {"role": "assistant", "content": "ok"}}]}
