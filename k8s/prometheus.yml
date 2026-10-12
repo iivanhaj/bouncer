@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: bouncer-gateway
+    # Resolves to every gateway pod's IP, so each replica is scraped separately.
+    dns_sd_configs:
+      - names: [gateway-metrics.bouncer.svc.cluster.local]
+        type: A
+        port: 9100

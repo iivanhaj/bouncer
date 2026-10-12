@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+spec:
+  selector: { app: gateway }
+  ports:
+    - { name: http, port: 8000, targetPort: http }
+---
+# Headless service for Prometheus: its DNS name resolves to every gateway pod, so each pod is
+# scraped individually. Only the metrics port; it is never exposed through the ingress.
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-metrics
+spec:
+  clusterIP: None
+  selector: { app: gateway }
+  ports:
+    - { name: metrics, port: 9100, targetPort: metrics }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  # Two replicas: the rate limiter, concurrency slots and budgets live in Redis precisely so
+  # that several instances enforce the same limits (DESIGN.md §2).
+  replicas: 2
+  selector:
+    matchLabels: { app: gateway }
+  template:
+    metadata:
+      labels: { app: gateway }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: { type: RuntimeDefault }
+      initContainers:
+        # Every pod runs migrations under a Postgres advisory lock (app/migrate.py), so pods
+        # starting together take turns instead of racing to create the same tables.
+        - name: migrate
+          image: bouncer-gateway:local
+          command: ["python", "-m", "app.migrate"]
+          env:
+            - name: BOUNCER_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: bouncer-secrets, key: database-url } }
+          securityContext: &locked-down
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      containers:
+        - name: gateway
+          image: bouncer-gateway:local
+          ports:
+            - { name: http, containerPort: 8000 }
+            - { name: metrics, containerPort: 9100 }
+          env:
+            - name: BOUNCER_ADMIN_TOKEN
+              valueFrom: { secretKeyRef: { name: bouncer-secrets, key: admin-token } }
+            - name: BOUNCER_DATABASE_URL
+              valueFrom: { secretKeyRef: { name: bouncer-secrets, key: database-url } }
+            - { name: BOUNCER_REDIS_URL, value: "redis://redis:6379/0" }
+            - name: BOUNCER_UPSTREAMS
+              value: '{"ollama": "http://host.docker.internal:11434", "mock": "http://mock-upstream:8001"}'
+            - { name: BOUNCER_MODELS_FILE, value: /config/models.yaml }
+          volumeMounts:
+            - { name: models, mountPath: /config, readOnly: true }
+          # Liveness only asks "is the process alive?". If it checked Redis, a Redis outage would
+          # make Kubernetes restart every gateway pod over and over (DESIGN.md §8).
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 10
+            failureThreshold: 3
+          # Readiness checks Postgres and Redis: an unready pod gets no traffic but isn't restarted.
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            periodSeconds: 5
+            failureThreshold: 2
+          resources:
+            requests: { cpu: 250m, memory: 256Mi }
+            limits: { memory: 512Mi }
+          securityContext: *locked-down
+      volumes:
+        - name: models
+          configMap: { name: gateway-models }

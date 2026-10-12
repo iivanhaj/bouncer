@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-upstream
+spec:
+  selector: { app: mock-upstream }
+  ports: [{ port: 8001 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-upstream
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mock-upstream }
+  template:
+    metadata:
+      labels: { app: mock-upstream }
+    spec:
+      containers:
+        - name: mock-upstream
+          image: bouncer-gateway:local
+          command: ["uvicorn", "mock_upstream.app:app", "--host", "0.0.0.0", "--port", "8001"]
+          env:
+            - { name: MOCK_TTFT_MS, value: "100" }
+            - { name: MOCK_TOKEN_DELAY_MS, value: "10" }
+          ports: [{ containerPort: 8001 }]
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8001 }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { memory: 256Mi }

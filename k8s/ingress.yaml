@@ -1,0 +1,23 @@
+# Only the OpenAI-compatible API goes through the ingress. The admin API, dashboard, metrics
+# and Prometheus stay inside the cluster (reached with kubectl port-forward). TLS would end
+# here in a real deployment.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway
+  annotations:
+    # Streaming: don't buffer responses, and allow long generations (DESIGN.md §5).
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "330"
+    nginx.ingress.kubernetes.io/proxy-body-size: "64k"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port: { name: http }
