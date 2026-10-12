@@ -19,7 +19,8 @@ its reasoning, and the loopholes it closes.
 | Redaction of personal data and secrets, prompt-injection blocking | ✅ |
 | Dashboard (keys, usage, blocked requests) | ✅ |
 | CI: lint, tests against Postgres + Redis, evaluations, dashboard build, Docker builds | ✅ |
-| Prometheus metrics, Kubernetes, load-test numbers | Week 3 |
+| Prometheus metrics (separate internal port), readiness probe | ✅ |
+| Kubernetes, load-test numbers | Week 3 |
 
 ## How a request flows
 
@@ -38,8 +39,9 @@ copy .env.example .env      # then set BOUNCER_ADMIN_TOKEN (see the comment in t
 docker compose --profile app up -d --build --wait
 ```
 
-This starts Postgres, Redis, the migrations, the gateway on http://localhost:8000 and the
-mock upstream on http://localhost:8001. [models.yaml](models.yaml) decides which model goes
+This starts Postgres, Redis, the migrations, the gateway on http://localhost:8000, the
+mock upstream on http://localhost:8001, the dashboard on http://127.0.0.1:3000 and Prometheus
+on http://127.0.0.1:9090. [models.yaml](models.yaml) decides which model goes
 where: `qwen2.5:0.5b` and `llama3.2:3b` go to Ollama on the host, and `mock` goes to the
 mock upstream (fast and predictable, for load tests). Models not listed are rejected.
 
@@ -90,7 +92,9 @@ reply = client.chat.completions.create(model="qwen2.5:0.5b", messages=[{"role": 
 | `DELETE /admin/keys/{id}` | Revoke a key |
 | `GET /admin/usage?days=7&bucket=day` | Tokens, cost, latency (avg, p95, time to first token) and outcomes per key, plus a time series |
 | `GET /admin/blocked` | Requests blocked by injection detection (or that would have been, in monitor mode): rule ids and scores only |
-| `GET /healthz` | Liveness |
+| `GET /healthz` | Liveness: the process is up (never checks dependencies) |
+| `GET /readyz` | Readiness: Postgres and Redis reachable (503 if not) |
+| `:9100/metrics` | Prometheus metrics, on a separate internal port |
 
 ## Develop locally
 

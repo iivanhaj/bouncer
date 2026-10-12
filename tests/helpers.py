@@ -24,6 +24,7 @@ def make_settings(**overrides) -> Settings:
         "admin_token": ADMIN_TOKEN,
         "upstreams": {"test": UPSTREAM},
         "models_file": TEST_MODELS_FILE,
+        "metrics_port": None,
     }
     values.update(overrides)
     return Settings(**values)

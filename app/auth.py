@@ -4,7 +4,7 @@ from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import func, or_, select
 
-from app import keys
+from app import keys, metrics
 from app.errors import GatewayError
 from app.models import ApiKey
 
@@ -13,6 +13,7 @@ bearer = HTTPBearer(auto_error=False)
 
 
 def _invalid_api_key() -> GatewayError:
+    metrics.REJECTED.labels("unauthorized").inc()
     # One message for missing, malformed, unknown, revoked and expired keys, so an attacker
     # can't tell which keys exist or were revoked (DESIGN.md §1).
     return GatewayError(401, "Invalid API key", "invalid_request_error", "invalid_api_key")

@@ -42,6 +42,10 @@ class Settings(DatabaseSettings):
     # Must stay below the concurrency cleanup age (DESIGN.md §2).
     stream_total_timeout: float = 300.0
 
+    # Prometheus metrics are served on this port, separate from the API. None disables it
+    # (tests create many apps in one process and can't all bind the same port).
+    metrics_port: int | None = 9100
+
     # In-progress entries older than this are treated as leaked slots and removed (DESIGN.md §2).
     concurrency_stale_seconds: float = 360.0
 

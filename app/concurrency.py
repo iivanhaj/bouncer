@@ -6,6 +6,7 @@ import anyio
 import redis.asyncio as redis
 from redis.exceptions import RedisError
 
+from app import metrics
 from app.errors import GatewayError, dependency_unavailable
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,7 @@ class Slot:
             try:
                 await self._client.zrem(self._set_key, self._request_id)
             except RedisError:
+                metrics.DEPENDENCY_ERRORS.labels("redis").inc()
                 # Not fatal: the stale-entry cleanup in acquire_slot.lua frees it later.
                 logger.warning("could not release concurrency slot %s", self._request_id)
 
@@ -49,6 +51,7 @@ class ConcurrencyLimiter:
         try:
             acquired, in_progress = await self._script(keys=[set_key], args=[self._stale_ms, limit, str(request_id)])
         except RedisError as err:
+            metrics.DEPENDENCY_ERRORS.labels("redis").inc()
             raise dependency_unavailable() from err
 
         if not acquired:

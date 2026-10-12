@@ -9,6 +9,7 @@ Two reasons it exists:
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app import metrics
 from app.errors import GatewayError, error_response
 
 _MESSAGE = "Request body too large: at most {limit} bytes"
@@ -36,6 +37,7 @@ class BodySizeLimitMiddleware:
                 except ValueError:
                     declared = 0
                 if declared > self.max_bytes:
+                    metrics.REJECTED.labels("body_too_large").inc()
                     error = _too_large(self.max_bytes)
                     response = error_response(error.status_code, error.message, error.type, error.code)
                     await response(scope, receive, send)
@@ -52,6 +54,7 @@ class BodySizeLimitMiddleware:
             if message["type"] == "http.request":
                 received += len(message.get("body", b""))
                 if received > self.max_bytes:
+                    metrics.REJECTED.labels("body_too_large").inc()
                     raise _too_large(self.max_bytes)
             return message
 

@@ -79,6 +79,19 @@ services:
       retries: 10
     profiles: ["app"]
 
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=7d"]
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      # The Prometheus UI, on localhost only. The gateway's metrics port is not published at all.
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    profiles: ["app"]
+
   # Admin dashboard. It holds the admin token and v1 has no logins, so anyone who can reach
   # it is the admin (DESIGN.md §7): published on 127.0.0.1 only, never on the network.
   dashboard:

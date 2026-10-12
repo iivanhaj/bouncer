@@ -24,7 +24,8 @@ RUN pip install --no-deps .
 RUN useradd --create-home --uid 10001 bouncer
 USER bouncer
 
-EXPOSE 8000
+# 8000: API. 9100: Prometheus metrics (internal only; never publish it).
+EXPOSE 8000 9100
 HEALTHCHECK --interval=5s --timeout=3s --retries=10 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=2)"
 

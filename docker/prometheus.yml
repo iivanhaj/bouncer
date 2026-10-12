@@ -1,0 +1,10 @@
+# Prometheus scrapes the gateway's metrics port over the Compose network. Port 9100 is never
+# published to the host, so metrics are only reachable from inside the network (DESIGN.md §8).
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: bouncer-gateway
+    static_configs:
+      - targets: ["gateway:9100"]

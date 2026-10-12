@@ -18,6 +18,7 @@ from redis.exceptions import RedisError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from app import metrics
 from app.config import Settings
 from app.errors import GatewayError, dependency_unavailable
 from app.models import RequestLog
@@ -86,6 +87,7 @@ class BudgetEnforcer:
         try:
             spent = await self.spent(key_id, moment)
         except RedisError as err:
+            metrics.DEPENDENCY_ERRORS.labels("redis").inc()
             # Fail closed, like the rate limiter.
             raise dependency_unavailable() from err
 
@@ -108,5 +110,6 @@ class BudgetEnforcer:
             try:
                 await self._settle(keys=[counter_key(key_id, moment)], args=[tokens])
             except RedisError:
+                metrics.DEPENDENCY_ERRORS.labels("redis").inc()
                 # The usage log still has the row, so the next rebuild will include it.
                 logger.warning("could not add %d tokens to the budget counter of key %s", tokens, key_id)

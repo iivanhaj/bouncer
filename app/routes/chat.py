@@ -1,10 +1,11 @@
+import time
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import StreamingResponse
 from starlette.background import BackgroundTask
 
-from app import tokens, upstream
+from app import metrics, tokens, upstream
 from app.auth import require_api_key
 from app.concurrency import Slot
 from app.errors import GatewayError
@@ -49,6 +50,24 @@ async def finish(request: Request, record: UsageRecord, slot: Slot | None) -> No
     if slot is not None:
         await slot.release()
     request.app.state.usage.record(record)
+    _observe(record)
+
+
+def _observe(record: UsageRecord) -> None:
+    """Prometheus metrics for one finished request. Labels only use gateway-defined values."""
+    model = metrics.model_label(record.model, known=record.route is not None)
+    metrics.IN_FLIGHT.dec()
+    metrics.REQUESTS.labels(record.status, model).inc()
+    metrics.REQUEST_DURATION.labels(model, str(record.stream).lower()).observe(time.monotonic() - record.started)
+    if record.ttft_ms is not None:
+        metrics.TIME_TO_FIRST_TOKEN.labels(model).observe(record.ttft_ms / 1000)
+    metrics.TOKENS.labels("prompt", model).inc(record.prompt_tokens)
+    metrics.TOKENS.labels("completion", model).inc(record.completion_tokens)
+    if record.status == "blocked_injection":
+        for rule in record.blocked_rules or []:
+            metrics.BLOCKED.labels(rule).inc()
+    for category, count in (record.redaction_counts or {}).items():
+        metrics.REDACTIONS.labels(category).inc(count)
 
 
 def _usage_from_completion(record: UsageRecord, body: ChatCompletionRequest, completion: dict[str, Any]) -> None:
@@ -85,7 +104,9 @@ async def chat_completions(
     state = request.app.state
     settings = state.settings
     headers = {"x-request-id": str(admission.request_id), **admission.rate_limit.headers()}
-    record = UsageRecord(id=admission.request_id, key_id=admission.api_key.id, model=body.model)
+    record = UsageRecord(id=admission.request_id, key_id=admission.api_key.id, model=body.model, stream=body.stream)
+    # Decremented in finish(), which every request past this point reaches exactly once.
+    metrics.IN_FLIGHT.inc()
     slot: Slot | None = None
     streaming = False
 

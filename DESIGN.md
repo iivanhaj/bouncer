@@ -395,7 +395,15 @@ or content the apps pass along (web pages, documents, tool output).
   - Redis and Postgres error counters
 - **`/healthz` (liveness)** checks only that the process is alive.
   **`/readyz` (readiness)** checks Postgres and Redis.
-- **`/metrics`** is reachable inside the cluster only, never through the ingress.
+- **Metrics are served on their own port (9100), not the API port.** Nothing published for API
+  traffic can expose them; in Docker Compose port 9100 is not published at all, and Prometheus
+  scrapes it over the internal network. (Stronger than "remember to exclude `/metrics` from the
+  ingress".) Tested: `/metrics` on the API port is a 404.
+- **Labels never contain client-supplied text.** A `model` label taken from the request would
+  let any client create unlimited time series; models are labelled by their `models.yaml` name
+  or `unlisted`. Tested with an attacker-chosen model name.
+- **Rejections before the pipeline** (401, 429, 413) have their own counter,
+  `bouncer_rejected_total{reason}`, since they never reach the usage log.
 - **Logs** are structured JSON with `request_id`. Prompt text is never logged.
 
 ---

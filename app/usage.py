@@ -10,6 +10,7 @@ from typing import Any
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from app import metrics
 from app.errors import GatewayError
 from app.models import RequestLog
 from app.models_registry import ModelRoute
@@ -42,6 +43,7 @@ class UsageRecord:
     model: str
     started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     started: float = field(default_factory=time.monotonic)
+    stream: bool = False
 
     upstream: str | None = None
     route: ModelRoute | None = None
@@ -119,6 +121,7 @@ class UsageRecorder:
             self._queue.put_nowait(record.to_row())
         except asyncio.QueueFull:
             self.dropped += 1
+            metrics.USAGE_LOG_DROPPED.inc()
             logger.warning("usage log queue full, dropped row for request %s", record.id)
 
     def start(self) -> None:
@@ -169,4 +172,6 @@ class UsageRecorder:
         except Exception:
             # Never let a database problem kill the writer loop.
             self.dropped += len(batch)
+            metrics.USAGE_LOG_DROPPED.inc(len(batch))
+            metrics.DEPENDENCY_ERRORS.labels("postgres").inc()
             logger.exception("failed to write %d usage rows", len(batch))

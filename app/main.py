@@ -1,13 +1,18 @@
+import asyncio
 import ssl
 from contextlib import asynccontextmanager
 from functools import lru_cache
+from typing import Any
 
 import certifi
 import httpx
 import redis.asyncio as redis
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from prometheus_client import start_http_server
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app import metrics
 from app.body_limit import BodySizeLimitMiddleware
 from app.budget import BudgetEnforcer
 from app.concurrency import ConcurrencyLimiter
@@ -24,6 +29,28 @@ from app.usage import UsageRecorder
 def _ssl_context() -> ssl.SSLContext:
     # Loading the certificate store takes ~0.5s on Windows, so build the context once per process.
     return ssl.create_default_context(cafile=certifi.where())
+
+
+_READY_CHECK_TIMEOUT = 1.0
+
+
+async def _check_postgres(app: FastAPI) -> bool:
+    try:
+        async with asyncio.timeout(_READY_CHECK_TIMEOUT), app.state.engine.connect() as connection:
+            await connection.exec_driver_sql("SELECT 1")
+        return True
+    except Exception:
+        metrics.DEPENDENCY_ERRORS.labels("postgres").inc()
+        return False
+
+
+async def _check_redis(app: FastAPI) -> bool:
+    try:
+        async with asyncio.timeout(_READY_CHECK_TIMEOUT):
+            return bool(await app.state.redis.ping())
+    except Exception:
+        metrics.DEPENDENCY_ERRORS.labels("redis").inc()
+        return False
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -70,7 +97,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             flush_interval=settings.usage_flush_interval_seconds,
         )
         app.state.usage.start()
+        app.state.engine, app.state.redis = engine, redis_client
+        # Metrics on their own port, never the API port (DESIGN.md §8).
+        metrics_server = start_http_server(settings.metrics_port) if settings.metrics_port else None
         yield
+        if metrics_server:
+            metrics_server[0].shutdown()
         # Flush queued usage rows before closing the database connections they need.
         await app.state.usage.stop()
         for client in app.state.upstream_clients.values():
@@ -87,6 +119,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def healthz() -> dict[str, str]:
         # Liveness only: never checks dependencies (see DESIGN.md §8).
         return {"status": "ok"}
+
+    @app.get("/readyz", response_model=None)
+    async def readyz() -> dict[str, Any] | JSONResponse:
+        """Readiness: can this instance serve traffic right now?
+
+        Unlike /healthz, this checks Postgres and Redis. Kubernetes stops routing traffic to a pod
+        that isn't ready but does NOT restart it, so a Redis outage doesn't turn into every
+        gateway pod restarting over and over (DESIGN.md §8).
+        """
+        checks = {"postgres": await _check_postgres(app), "redis": await _check_redis(app)}
+        if all(checks.values()):
+            return {"status": "ready", "checks": checks}
+        return JSONResponse({"status": "not ready", "checks": checks}, status_code=503)
 
     register_error_handlers(app)
     app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)

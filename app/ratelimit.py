@@ -7,6 +7,7 @@ import redis.asyncio as redis
 from fastapi import Depends, Request
 from redis.exceptions import RedisError
 
+from app import metrics
 from app.auth import require_api_key
 from app.errors import GatewayError, dependency_unavailable
 from app.models import ApiKey
@@ -66,10 +67,12 @@ async def enforce_rate_limit(request: Request, api_key: ApiKey = Depends(require
     try:
         result = await request.app.state.rate_limiter.hit(api_key.id, api_key.rpm_limit, request_id)
     except RedisError as err:
+        metrics.DEPENDENCY_ERRORS.labels("redis").inc()
         # Fail closed: a security gateway must not become unlimited when Redis is down (DESIGN.md §2).
         raise dependency_unavailable() from err
 
     if not result.allowed:
+        metrics.REJECTED.labels("rate_limited").inc()
         raise GatewayError(
             429,
             f"Rate limit reached: {result.limit} requests per minute. Retry after {result.retry_after_seconds}s.",
