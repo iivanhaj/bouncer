@@ -44,7 +44,7 @@ async def finish(request: Request, record: UsageRecord, slot: Slot | None) -> No
     if record.finished:
         return
     record.finished = True
-    # Later step slots in here: add tokens to the budget counter.
+    await request.app.state.budget.settle(record.key_id, record.total_tokens, record.started_at)
     if slot is not None:
         await slot.release()
     request.app.state.usage.record(record)
@@ -104,7 +104,13 @@ async def chat_completions(
         slot = await state.concurrency.acquire(
             admission.api_key.id, admission.api_key.max_concurrent, admission.request_id
         )
-        # Later step slots in here: budget check (must come AFTER the slot, see DESIGN.md pipeline).
+        # AFTER the slot (DESIGN.md pipeline): the headroom only covers requests that hold one.
+        await state.budget.check(
+            admission.api_key.id,
+            admission.api_key.monthly_token_budget,
+            admission.api_key.max_concurrent,
+            record.started_at,
+        )
 
         if not body.stream:
             completion = await upstream.create_chat_completion(client, payload)

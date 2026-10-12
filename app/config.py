@@ -51,6 +51,10 @@ class Settings(DatabaseSettings):
     usage_batch_size: int = 100
     usage_flush_interval_seconds: float = 1.0
 
+    # Extra tokens per request in the budget headroom: upstreams can report a token or so past
+    # max_tokens (DESIGN.md §2).
+    budget_token_margin: int = 16
+
     max_tokens_cap: int = 2048
     # Also the upper bound on prompt tokens: a token is always at least one byte.
     max_body_bytes: int = 32_768

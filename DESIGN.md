@@ -115,7 +115,7 @@ Three limits, each protecting something different:
 
 ### Budget: hard limit with headroom
 ```
-headroom        = max_concurrent × (max_prompt_tokens + MAX_TOKENS_CAP)
+headroom        = max_concurrent × (MAX_BODY_BYTES + MAX_TOKENS_CAP + BUDGET_TOKEN_MARGIN)
 effective_limit = monthly_token_budget − headroom
 ```
 - A request is allowed if the tokens spent this month are below `effective_limit`.
@@ -126,9 +126,23 @@ effective_limit = monthly_token_budget − headroom
 - `monthly_token_budget = null` means unlimited.
 - 429 with `code: "insufficient_quota"`.
 
-**Counter:** Redis key `budget:{key_id}:{YYYY-MM}`, increased with `INCRBY`
-when a request finishes. Expires after ~40 days. A new month means a new key,
-so no reset job is needed.
+- **Why `MAX_BODY_BYTES` bounds prompt tokens:** a token is at least one byte, and the
+  JSON framing around each message (`{"role":"user","content":""}`) is larger than the
+  chat template's extra tokens. The body size limit (pipeline step 1) enforces it.
+- **`BUDGET_TOKEN_MARGIN` (16):** upstreams can report a token or so past `max_tokens`
+  (Ollama 0.4.1 reported 16 for `max_tokens: 15`).
+
+**Counter:** Redis key `budget:{key_id}:{YYYY-MM}`, increased when a request finishes.
+Expires after ~40 days. A new month means a new key, so no reset job is needed. The
+month comes from when the request *started*, for both the check and the count, so a
+request running across midnight at month end is charged to one month only.
+
+**Counting only adds to an existing counter** (a Lua `EXISTS` + `INCRBY`). If Redis lost
+the counter between the check and the count, `INCRBY` would recreate it near zero and
+hide the month's spending. Leaving it missing makes the next check rebuild it from Postgres.
+
+**Proven by tests:** the counter is updated *before* the slot is released (swapping the
+order makes `test_tokens_are_counted_before_the_slot_is_released` fail with `[0] == [42]`).
 
 **What counts:** prompt + completion tokens for successful requests; partial
 tokens for client disconnects; whatever usage the upstream reports for

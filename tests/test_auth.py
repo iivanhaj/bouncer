@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from app import keys
+from app.budget import headroom
 from app.config import Settings
 from app.main import create_app
 from tests.helpers import ADMIN_HEADERS, ADMIN_TOKEN, UPSTREAM_URL, create_key, make_settings, run_sql
@@ -165,17 +166,16 @@ def test_revoking_twice_keeps_first_revocation_time(client):
 
 
 def test_budget_below_ten_times_headroom_is_rejected(client):
-    settings = make_settings()
-    headroom = 4 * (settings.max_body_bytes + settings.max_tokens_cap)
+    reserved = headroom(make_settings(), max_concurrent=4)
 
     too_small = client.post(
         "/admin/keys",
-        json={"team_name": "t", "monthly_token_budget": 10 * headroom - 1},
+        json={"team_name": "t", "monthly_token_budget": 10 * reserved - 1},
         headers=ADMIN_HEADERS,
     )
     big_enough = client.post(
         "/admin/keys",
-        json={"team_name": "t", "monthly_token_budget": 10 * headroom},
+        json={"team_name": "t", "monthly_token_budget": 10 * reserved},
         headers=ADMIN_HEADERS,
     )
 

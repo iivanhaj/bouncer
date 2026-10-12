@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from app import keys
 from app.auth import require_admin
-from app.config import Settings
+from app.budget import headroom
 from app.errors import GatewayError
 from app.models import ApiKey
 
@@ -45,18 +45,12 @@ class CreatedKey(KeyInfo):
     key: str
 
 
-def budget_headroom(settings: Settings, max_concurrent: int) -> int:
-    """Tokens reserved so requests already in progress can finish without exceeding the budget (DESIGN.md §2)."""
-    max_tokens_per_request = settings.max_body_bytes + settings.max_tokens_cap
-    return max_concurrent * max_tokens_per_request
-
-
 @router.post("/keys", status_code=201)
 async def create_key(body: CreateKeyRequest, request: Request) -> CreatedKey:
     settings = request.app.state.settings
 
     if body.monthly_token_budget is not None:
-        minimum = 10 * budget_headroom(settings, body.max_concurrent)
+        minimum = 10 * headroom(settings, body.max_concurrent)
         if body.monthly_token_budget < minimum:
             raise GatewayError(
                 400,

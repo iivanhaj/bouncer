@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.body_limit import BodySizeLimitMiddleware
+from app.budget import BudgetEnforcer
 from app.concurrency import ConcurrencyLimiter
 from app.config import Settings, get_settings
 from app.errors import register_error_handlers
@@ -58,6 +59,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         app.state.rate_limiter = RateLimiter(redis_client, settings.rate_limit_window_seconds)
         app.state.concurrency = ConcurrencyLimiter(redis_client, settings.concurrency_stale_seconds)
+        app.state.budget = BudgetEnforcer(redis_client, app.state.sessionmaker, settings)
         app.state.usage = UsageRecorder(
             app.state.sessionmaker,
             max_queue=settings.usage_queue_size,
