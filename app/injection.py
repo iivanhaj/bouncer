@@ -16,7 +16,7 @@ How a request is scored:
 4. Each rule that matches adds its weight once. At score >= threshold the request is blocked
    (or, in monitor mode, logged as "would have blocked").
 
-Stated limitation: rules are English-only.
+Stated limitation: rules cover English and German only.
 """
 
 import base64

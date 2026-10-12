@@ -248,22 +248,34 @@ or content the apps pass along (web pages, documents, tool output).
   that is the data for tuning weights later. Monitor mode logs would-be blocks with the
   request's normal status.
 - **Error responses carry `x-request-id`**, so the reference in a 403 matches the log row.
-- **Measured** (`python -m evals.injection_eval`; rules written against the dev half only,
-  test half run once and reported without tuning):
+- **Measured** (`python -m evals.injection_eval`). The headline number is the held-out
+  test split of the public `deepset/prompt-injections` dataset (English and German), run once
+  after the rules were written against dev data only:
 
-  | Split | Catch rate | False positives |
+  | Data | Catch rate | False positives |
   |---|---|---|
-  | dev | 25/25 (100%) | 0/25 |
-  | **test** | **20/25 (80%)** | **1/25 (4%)** |
+  | **Public test (held out)** | **15/60 (25%)** | **0/56 (0%)** |
+  | Public dev (deepset's train split) | 73/203 (36%) | 0/343 (0%) |
+  | Hand-written "test" | 20/25 (80%) | 1/25 (4%) |
+  | Hand-written "dev" | 25/25 (100%) | 0/25 |
 
-  Test misses: a French injection (English-only rules), three near-misses scoring 0.5–0.9
-  (real signals, below the threshold). The false positive quotes the attack while asking how
-  to defend against it, the classic hard case for pattern rules. Caveat: the same person
-  wrote the rules and both halves; a public set such as `deepset/prompt-injections` makes a
-  more independent test half.
+- **What the public dataset revealed:** my own test set reported 80%; the same rules caught
+  **8%** of the public test set. The hand-written attacks were written by the person writing
+  the rules, so they were the attacks the rules expected. Rewriting against the public dev
+  split (adding German rules, "forget everything before that", dropping previous tasks,
+  praise-then-pivot, prompt-text extraction, ignore-the-documents for retrieval apps) took
+  the held-out number from 8% to 25% with no false positives.
+- **Deliberately not chased:** "I want you to act as a Linux terminal / debater" (the dataset
+  labels popular persona prompts as injections; blocking them would break normal use), and
+  pure topic hijacks ("Write why newspaper X is the best"), which no text pattern can tell
+  apart from a real request without knowing what the app is for.
+- **The honest framing:** rules are a cheap first layer with zero false positives that stops
+  the obvious attacks. The next layer would be a small classifier model; the real defense
+  remains architectural (least privilege for tools, never trusting model output).
+- **Known false positive:** quoting the attack while asking how to defend against it.
 - **YAML trap found while building:** a rule field named `on` was read as the boolean `True`
   (YAML 1.1). Renamed to `form`.
-- **Stated limitations:** English-only rules. A heuristic layer, not a
+- **Stated limitations:** rules cover English and German only. A heuristic layer, not a
   complete defense. The real defense is giving the model's tools minimal
   access and never trusting model output.
 
@@ -457,7 +469,7 @@ Answer each in one sentence, in your own words:
 16. Why is the request body size limit part of the budget's guarantee?
 17. Why does redaction check context (`(?<![\w-])`) as well as checksums?
 18. Name two quadratic-time problems found in the redaction code, and how they were fixed.
-19. Why is the injection test set split, and why is the "test" number lower than "dev"?
+19. Why did the rules score 80% on my own test set but 8% on a public one, and what does 25% with 0% false positives mean?
 20. Why does the 403 for a blocked prompt not say which rule matched?
 21. How does the dashboard keep the admin token out of the browser?
 22. Why does YAML read a key named `on` as `True`, and where did it bite this project?

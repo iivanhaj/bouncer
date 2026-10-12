@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from app.injection import ENCODED_PAYLOAD_RULE, InjectionDetector, load_rules, normalize, to_words
 from app.main import create_app
 from app.schemas import ChatMessage
-from evals.injection_eval import evaluate
+from evals.injection_eval import PUBLIC_FILE, evaluate
 from tests.helpers import UPSTREAM_URL, create_key, fetch_rows, make_settings
 
 RULES = load_rules()
@@ -141,12 +141,18 @@ def test_scanning_stays_fast_on_adversarial_input(name):
 
 
 def test_measured_quality_does_not_regress():
-    reports = evaluate()
+    public = evaluate(PUBLIC_FILE)
+    hand_written = evaluate()
 
-    assert reports["test"].catch_rate >= 0.80
-    assert reports["test"].false_positive_rate <= 0.04
-    assert reports["dev"].catch_rate == 1.0
-    assert reports["dev"].false_positive_rate == 0.0
+    # Held-out public test split: the headline number (25.0% / 0.0% when measured).
+    assert public["test"].catch_rate >= 0.25
+    assert public["test"].false_positive_rate == 0.0
+    # Dev data, which the rules were written against.
+    assert public["dev"].catch_rate >= 0.35
+    assert public["dev"].false_positive_rate == 0.0
+    assert hand_written["dev"].catch_rate == 1.0
+    assert hand_written["test"].catch_rate >= 0.80
+    assert hand_written["test"].false_positive_rate <= 0.04
 
 
 # --- Through the gateway ---------------------------------------------------------------

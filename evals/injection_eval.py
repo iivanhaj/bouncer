@@ -1,11 +1,14 @@
-"""Measure injection detection on evals/injection_cases.jsonl.
+"""Measure injection detection.
 
 Run from the repo root:  python -m evals.injection_eval
 
-The cases are split in half. The rules in app/injection_rules.yaml were written while looking
-only at the "dev" half, so dev numbers are optimistic by construction. The "test" half is the
-honest number: rules must not be tuned to it. To keep it honest, a test-set miss is fixed only
-by adding a dev case first and tuning against that.
+Two datasets:
+- PUBLIC: deepset/prompt-injections (evals/data/, English and German). Its "dev" split
+  (deepset's train split) may be used to write rules; its "test" split is held out and is the
+  headline number. Rules must never be tuned to it: a test-set miss is fixed only by finding
+  the same pattern in dev data first.
+- HAND_WRITTEN: evals/injection_cases.jsonl, written alongside the first version of the rules.
+  Too easy to be a fair test (same author as the rules), so it is dev data now.
 """
 
 import json
@@ -16,6 +19,8 @@ from app.injection import InjectionDetector, Verdict
 from app.schemas import ChatMessage
 
 CASES_FILE = Path(__file__).parent / "injection_cases.jsonl"
+PUBLIC_FILE = Path(__file__).parent / "data" / "deepset_prompt_injections.jsonl"
+DATASETS = {"public (deepset/prompt-injections)": PUBLIC_FILE, "hand-written": CASES_FILE}
 
 
 @dataclass
@@ -58,13 +63,15 @@ def evaluate(cases_file: Path = CASES_FILE, detector: InjectionDetector | None =
 
 
 def main() -> None:
-    for split, report in sorted(evaluate().items()):
-        print(
-            f"[{split}] catch rate {report.caught}/{report.injections} ({report.catch_rate:.0%}), "
-            f"false positives {report.false_positives}/{report.benign} ({report.false_positive_rate:.0%})"
-        )
-        for kind, verdict, text in report.mistakes:
-            print(f"    {kind:<14} score {verdict.score:<4} {verdict.rules}  {text[:70]!r}")
+    detector = InjectionDetector()
+    for name, path in DATASETS.items():
+        print(name)
+        for split, report in sorted(evaluate(path, detector).items(), reverse=True):
+            label = f"{split} (held out)" if path == PUBLIC_FILE and split == "test" else split
+            print(
+                f"  [{label}] catch rate {report.caught}/{report.injections} ({report.catch_rate:.0%}), "
+                f"false positives {report.false_positives}/{report.benign} ({report.false_positive_rate:.0%})"
+            )
 
 
 if __name__ == "__main__":
