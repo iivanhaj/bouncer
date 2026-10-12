@@ -359,6 +359,15 @@ or content the apps pass along (web pages, documents, tool output).
   `kubectl port-forward` only). It holds the admin token on its server and v1
   has no logins, so anyone who can reach it is the admin.
 - **Three pages:** keys (create, revoke, expiry), usage, blocked requests.
+- **Redesigned in week 2** (Next.js 16, shadcn/ui from its `dashboard-01` block, following the
+  `frontend-design` skill). The first version was the generic default: five identical rounded
+  stat cards with gradient washes and the stock neutral palette. The redesign spends its
+  boldness on one element, a door tally splitting requests into served / blocked / failed, and
+  keeps everything else quiet (hairline rules, no shadows). Colours carry meaning everywhere:
+  `served` teal, `blocked` velvet-rope burgundy (also the brand), `failed` amber. One typeface,
+  Archivo, using its width axis for the wordmark and headline numbers.
+- **Moving to Next 16 also fixed two `postcss` advisories** (one high) reported by `npm audit`
+  against Next 15.
 - **Next.js (App Router).** Pages are server components that call the admin API; create and
   revoke are server actions. The API client imports `server-only`, so the build fails if it is
   ever pulled into browser code. Checked: the built browser bundles contain neither the token

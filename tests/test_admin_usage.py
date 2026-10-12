@@ -137,3 +137,25 @@ def test_blocked_is_newest_first_and_limited(client):
     assert len(blocked) == 3
     times = [b["created_at"] for b in blocked]
     assert times == sorted(times, reverse=True)
+
+
+def test_usage_totals_cover_the_whole_gateway(client):
+    a, b = create_key(client, team_name="a"), create_key(client, team_name="b")
+    for latency in range(1, 21):  # a: 1..20 ms
+        log_row(a["id"], latency=latency)
+    log_row(b["id"], latency=1000, status="blocked_injection", prompt=0, completion=0, rules=["r"], score=1.0)
+
+    totals = client.get("/admin/usage", headers=ADMIN_HEADERS).json()["totals"]
+
+    assert totals["requests"] == 21
+    assert totals["blocked"] == 1
+    assert totals["prompt_tokens"] == 200
+    # Overall p95 across all 21 rows, which no combination of per-key p95s would give.
+    assert totals["p95_latency_ms"] == pytest.approx(20.0)
+
+
+def test_usage_totals_are_zero_with_no_traffic(client):
+    totals = client.get("/admin/usage", headers=ADMIN_HEADERS).json()["totals"]
+
+    assert totals["requests"] == 0
+    assert totals["p95_latency_ms"] is None

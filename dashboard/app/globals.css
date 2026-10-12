@@ -1,110 +1,149 @@
-:root {
-  --bg: #f6f7f9;
-  --card: #ffffff;
-  --text: #111827;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --accent: #2563eb;
-  --danger: #dc2626;
-  --warn: #d97706;
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-served: var(--served);
+  --color-blocked: var(--blocked);
+  --color-failed: var(--failed);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0f17;
-    --card: #131a26;
-    --text: #e5e7eb;
-    --muted: #9ca3af;
-    --border: #253043;
-    --accent: #60a5fa;
-    --danger: #f87171;
-    --warn: #fbbf24;
+:root {
+  /* Bouncer palette. Paper and ink are cool blue-greys; the brand accent is velvet-rope
+     burgundy. served / blocked / failed carry meaning wherever they appear. */
+  --background: #eef1f5;
+  --foreground: #1c2333;
+  --card: #f7f9fb;
+  --card-foreground: #1c2333;
+  --popover: #ffffff;
+  --popover-foreground: #1c2333;
+  --primary: #8a1c3c;
+  --primary-foreground: #ffffff;
+  --secondary: #e3e8ef;
+  --secondary-foreground: #1c2333;
+  --muted: #e3e8ef;
+  --muted-foreground: #5b667a;
+  --accent: #e3e8ef;
+  --accent-foreground: #1c2333;
+  --destructive: #b42318;
+  --border: #cdd4df;
+  --input: #cdd4df;
+  --ring: #8a1c3c;
+  --served: #0f766e;
+  --blocked: #8a1c3c;
+  --failed: #b45309;
+  /* Team series in charts: distinct, and never the rope colour (that means "blocked"). */
+  --chart-1: #3b5b92;
+  --chart-2: #0f766e;
+  --chart-3: #b45309;
+  --chart-4: #6b4fa0;
+  --chart-5: #64748b;
+  --radius: 0.5rem;
+  --sidebar: #e4e8ee;
+  --sidebar-foreground: #1c2333;
+  --sidebar-primary: #8a1c3c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #d7dde6;
+  --sidebar-accent-foreground: #1c2333;
+  --sidebar-border: #cdd4df;
+  --sidebar-ring: #8a1c3c;
+}
+
+.dark {
+  /* Night is a clear blue, not tinted near-black. */
+  --background: #121829;
+  --foreground: #e6eaf2;
+  --card: #182036;
+  --card-foreground: #e6eaf2;
+  --popover: #182036;
+  --popover-foreground: #e6eaf2;
+  --primary: #e25d80;
+  --primary-foreground: #121829;
+  --secondary: #222b44;
+  --secondary-foreground: #e6eaf2;
+  --muted: #222b44;
+  --muted-foreground: #9aa4b8;
+  --accent: #222b44;
+  --accent-foreground: #e6eaf2;
+  --destructive: #f0707a;
+  --border: #2a3450;
+  --input: #2a3450;
+  --ring: #e25d80;
+  --served: #2dd4bf;
+  --blocked: #e25d80;
+  --failed: #f5a524;
+  --chart-1: #7fa3e0;
+  --chart-2: #2dd4bf;
+  --chart-3: #f5a524;
+  --chart-4: #b49ae8;
+  --chart-5: #94a3b8;
+  --sidebar: #0f1424;
+  --sidebar-foreground: #e6eaf2;
+  --sidebar-primary: #e25d80;
+  --sidebar-primary-foreground: #121829;
+  --sidebar-accent: #1e2740;
+  --sidebar-accent-foreground: #e6eaf2;
+  --sidebar-border: #2a3450;
+  --sidebar-ring: #e25d80;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 14px;
+@layer utilities {
+  /* Archivo's width axis: expanded type for the wordmark and headline numbers. */
+  .font-wide {
+    font-stretch: 125%;
+  }
 }
-
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 12px 24px;
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
-}
-.brand { font-weight: 700; font-size: 16px; }
-.topbar nav { display: flex; gap: 16px; }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-.active-link { font-weight: 700; }
-
-main { max-width: 1200px; margin: 0 auto; padding: 16px 24px 48px; }
-h1 { font-size: 22px; }
-h2 { font-size: 15px; margin-top: 0; }
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-  overflow-x: auto;
-}
-
-table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-th { color: var(--muted); font-weight: 600; font-size: 12px; }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
-tr.revoked td { opacity: 0.5; }
-.muted { color: var(--muted); }
-.warn { color: var(--warn); }
-code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
-code.rule { display: inline-block; margin-right: 4px; padding: 1px 6px; border-radius: 4px; background: var(--bg); }
-
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
-label { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 12px; }
-input {
-  padding: 6px 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-}
-button {
-  padding: 7px 12px;
-  border: 0;
-  border-radius: 6px;
-  background: var(--accent);
-  color: white;
-  font-size: 14px;
-  cursor: pointer;
-}
-button:disabled { opacity: 0.6; cursor: default; }
-.danger-button { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 3px 8px; font-size: 12px; }
-
-.error { color: var(--danger); }
-.new-key { margin-top: 12px; padding: 12px; border: 1px solid var(--warn); border-radius: 6px; }
-.new-key code { display: block; font-size: 13px; word-break: break-all; user-select: all; }
-
-.budget { position: relative; width: 180px; height: 18px; border-radius: 4px; background: var(--bg); overflow: hidden; }
-.budget-fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); opacity: 0.35; }
-.budget-fill.danger { background: var(--danger); opacity: 0.5; }
-.budget span { position: relative; padding-left: 6px; font-size: 11px; line-height: 18px; }
-
-.pill { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-.pill.danger { color: var(--danger); border: 1px solid var(--danger); }
-.pill.warn { color: var(--warn); border: 1px solid var(--warn); }
-
-.chart { width: 100%; height: auto; }
-.chart .axis { fill: var(--muted); font-size: 11px; }
-.legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; color: var(--muted); }
-.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; }

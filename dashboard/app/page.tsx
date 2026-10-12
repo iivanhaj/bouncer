@@ -1,104 +1,88 @@
-import { api, type KeyUsage } from "@/lib/api";
-import { date, ms, number, usd } from "@/lib/format";
+import Link from "next/link";
 
-import { revokeKey } from "./keys/actions";
-import { CreateKeyForm } from "./keys/create-key-form";
+import { BlockedTable } from "@/components/blocked-table";
+import { DoorTally, MetricRow } from "@/components/door-tally";
+import { KeysTable } from "@/components/keys-table";
+import { RangeToggle } from "@/components/range-toggle";
+import { SiteHeader } from "@/components/site-header";
+import { TokensChart } from "@/components/tokens-chart";
+import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { parseDays } from "@/lib/range";
 
-// Always render on request: this page shows live data and must never be cached.
+// Live data: render on every request, never cache.
 export const dynamic = "force-dynamic";
 
-function BudgetBar({ budget, usage }: { budget: number | null; usage: KeyUsage | undefined }) {
-  if (!budget) return <span className="muted">unlimited</span>;
-  // No usage in the last 30 days means nothing spent this month either.
-  if (!usage || usage.usable_budget == null) return <span className="muted">0 used of {number(budget)}</span>;
-  const used = Math.min(1, usage.month_tokens / usage.usable_budget);
+function Section({
+  title,
+  description,
+  action,
+  children,
+}: {
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <div
-      className="budget"
-      title={`${number(usage.month_tokens)} of ${number(usage.usable_budget)} usable tokens (budget ${number(budget)}; the rest is reserved for requests in progress)`}
-    >
-      <div className={`budget-fill ${used >= 0.9 ? "danger" : ""}`} style={{ width: `${used * 100}%` }} />
-      <span>
-        {number(usage.month_tokens)} / {number(usage.usable_budget)}
-      </span>
-    </div>
+    <section className="grid content-start gap-3">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold">{title}</h2>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        {action}
+      </div>
+      <div className="overflow-hidden rounded-lg border bg-card">{children}</div>
+    </section>
   );
 }
 
-function expiresSoon(expiresAt: string | null): boolean {
-  return expiresAt != null && new Date(expiresAt).getTime() - Date.now() < 7 * 24 * 3600 * 1000;
-}
-
-export default async function KeysPage() {
-  const [keys, usage] = await Promise.all([api.listKeys(), api.usage(30, "day")]);
-  const usageByKey = new Map(usage.keys.map((u) => [u.key_id, u]));
+export default async function OverviewPage({ searchParams }: PageProps<"/">) {
+  const days = parseDays((await searchParams).days);
+  const [usage, keys, blocked] = await Promise.all([api.usage(days, "day"), api.listKeys(), api.blocked(5)]);
+  const activeKeys = keys.filter((k) => !k.revoked_at);
+  // Busiest first by requests in the window; keys with no traffic go last (not first: a missing
+  // key would get index -1 from indexOf and sort ahead of everything).
+  const requestsByKey = new Map(usage.keys.map((u) => [u.key_id, u.requests]));
+  const topKeys = [...activeKeys]
+    .sort((a, b) => (requestsByKey.get(b.id) ?? 0) - (requestsByKey.get(a.id) ?? 0))
+    .slice(0, 5);
 
   return (
     <>
-      <h1>API keys</h1>
-      <CreateKeyForm />
-      <section className="card">
-        <h2>All keys</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Team</th>
-              <th>Key</th>
-              <th>Limits</th>
-              <th>This month&apos;s budget</th>
-              <th className="num">Requests (30d)</th>
-              <th className="num">Cost (30d)</th>
-              <th className="num">p95 latency</th>
-              <th>Expires</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {keys.length === 0 && (
-              <tr>
-                <td colSpan={9} className="muted">
-                  No keys yet.
-                </td>
-              </tr>
-            )}
-            {keys.map((key) => {
-              const u = usageByKey.get(key.id);
-              return (
-                <tr key={key.id} className={key.revoked_at ? "revoked" : ""}>
-                  <td>{key.team_name}</td>
-                  <td>
-                    <code>{key.key_prefix}…</code>
-                  </td>
-                  <td>
-                    {key.rpm_limit}/min, {key.max_concurrent} at once
-                  </td>
-                  <td>
-                    <BudgetBar budget={key.monthly_token_budget} usage={u} />
-                  </td>
-                  <td className="num">{number(u?.requests ?? 0)}</td>
-                  <td className="num">{usd(u?.cost_usd ?? 0)}</td>
-                  <td className="num">{ms(u?.p95_latency_ms)}</td>
-                  <td className={expiresSoon(key.expires_at) && !key.revoked_at ? "warn" : ""}>
-                    {key.expires_at ? date(key.expires_at) : "never"}
-                  </td>
-                  <td>
-                    {key.revoked_at ? (
-                      <span className="muted">revoked</span>
-                    ) : (
-                      <form action={revokeKey}>
-                        <input type="hidden" name="id" value={key.id} />
-                        <button className="danger-button" type="submit">
-                          Revoke
-                        </button>
-                      </form>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </section>
+      <SiteHeader title="Overview">
+        <RangeToggle days={days} />
+      </SiteHeader>
+      <div className="@container/main flex flex-1 flex-col gap-8 p-4 md:p-8">
+        <DoorTally totals={usage.totals} days={days} />
+        <MetricRow totals={usage.totals} />
+        <TokensChart series={usage.series} teams={usage.keys} since={usage.since} days={days} />
+        <div className="grid gap-8 @5xl/main:grid-cols-2">
+          <Section
+            title="Busiest keys"
+            description={`${activeKeys.length} of ${keys.length} keys active`}
+            action={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/keys">Manage keys</Link>
+              </Button>
+            }
+          >
+            <KeysTable keys={topKeys} usage={usage.keys} compact />
+          </Section>
+          <Section
+            title="Recently blocked"
+            description="Prompt-injection attempts stopped at the door"
+            action={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/blocked">See all</Link>
+              </Button>
+            }
+          >
+            <BlockedTable rows={blocked} compact />
+          </Section>
+        </div>
+      </div>
     </>
   );
 }

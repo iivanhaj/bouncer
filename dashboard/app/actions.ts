@@ -23,14 +23,19 @@ export async function createKey(_previous: CreateKeyState, form: FormData): Prom
   };
   try {
     const created = await api.createKey(Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined)));
-    revalidatePath("/");
+    revalidatePath("/", "layout");
     return { created };
   } catch (error) {
     return { error: error instanceof ApiError ? error.message : "Could not create the key" };
   }
 }
 
-export async function revokeKey(form: FormData): Promise<void> {
-  await api.revokeKey(String(form.get("id")));
-  revalidatePath("/");
+export async function revokeKey(id: string): Promise<{ error?: string }> {
+  try {
+    await api.revokeKey(id);
+    revalidatePath("/", "layout");
+    return {};
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : "Could not revoke the key" };
+  }
 }

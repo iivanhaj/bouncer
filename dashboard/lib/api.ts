@@ -45,11 +45,7 @@ export type ApiKey = {
 
 export type CreatedKey = ApiKey & { key: string };
 
-export type KeyUsage = {
-  key_id: string;
-  team_name: string;
-  key_prefix: string;
-  revoked: boolean;
+export type UsageTotals = {
   requests: number;
   prompt_tokens: number;
   completion_tokens: number;
@@ -59,6 +55,13 @@ export type KeyUsage = {
   avg_ttft_ms: number | null;
   errors: number;
   blocked: number;
+};
+
+export type KeyUsage = UsageTotals & {
+  key_id: string;
+  team_name: string;
+  key_prefix: string;
+  revoked: boolean;
   month_tokens: number;
   monthly_token_budget: number | null;
   usable_budget: number | null;
@@ -73,7 +76,13 @@ export type UsagePoint = {
   p95_latency_ms: number | null;
 };
 
-export type UsageReport = { since: string; bucket: "hour" | "day"; keys: KeyUsage[]; series: UsagePoint[] };
+export type UsageReport = {
+  since: string;
+  bucket: "hour" | "day";
+  totals: UsageTotals;
+  keys: KeyUsage[];
+  series: UsagePoint[];
+};
 
 export type BlockedRequest = {
   id: string;

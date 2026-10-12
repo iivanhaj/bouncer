@@ -16,11 +16,7 @@ from app.models import ApiKey, RequestLog
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)])
 
 
-class KeyUsage(BaseModel):
-    key_id: uuid.UUID
-    team_name: str
-    key_prefix: str
-    revoked: bool
+class UsageTotals(BaseModel):
     requests: int
     prompt_tokens: int
     completion_tokens: int
@@ -30,6 +26,13 @@ class KeyUsage(BaseModel):
     avg_ttft_ms: float | None
     errors: int
     blocked: int
+
+
+class KeyUsage(UsageTotals):
+    key_id: uuid.UUID
+    team_name: str
+    key_prefix: str
+    revoked: bool
     # This calendar month, for the budget bar.
     month_tokens: int
     monthly_token_budget: int | None
@@ -48,8 +51,25 @@ class UsagePoint(BaseModel):
 class UsageReport(BaseModel):
     since: datetime
     bucket: Literal["hour", "day"]
+    # The whole gateway. Computed in SQL: percentiles can't be combined from per-key values.
+    totals: UsageTotals
     keys: list[KeyUsage]
     series: list[UsagePoint]
+
+
+def _metrics():
+    """The aggregate columns shared by the per-key and whole-gateway queries."""
+    return [
+        func.count().label("requests"),
+        func.coalesce(func.sum(RequestLog.prompt_tokens), 0).label("prompt_tokens"),
+        func.coalesce(func.sum(RequestLog.completion_tokens), 0).label("completion_tokens"),
+        func.coalesce(func.sum(RequestLog.cost_usd), 0).label("cost_usd"),
+        cast(func.avg(RequestLog.latency_ms), Float).label("avg_latency_ms"),
+        cast(func.percentile_cont(0.95).within_group(RequestLog.latency_ms), Float).label("p95_latency_ms"),
+        cast(func.avg(RequestLog.ttft_ms), Float).label("avg_ttft_ms"),
+        func.count().filter(RequestLog.status.notin_(["ok", "blocked_injection"])).label("errors"),
+        func.count().filter(RequestLog.status == "blocked_injection").label("blocked"),
+    ]
 
 
 @router.get("/usage")
@@ -67,23 +87,8 @@ async def usage(
     tokens = RequestLog.prompt_tokens + RequestLog.completion_tokens
     p95 = func.percentile_cont(0.95).within_group(RequestLog.latency_ms)
 
-    totals = (
-        select(
-            RequestLog.key_id,
-            func.count().label("requests"),
-            func.coalesce(func.sum(RequestLog.prompt_tokens), 0).label("prompt_tokens"),
-            func.coalesce(func.sum(RequestLog.completion_tokens), 0).label("completion_tokens"),
-            func.coalesce(func.sum(RequestLog.cost_usd), 0).label("cost_usd"),
-            cast(func.avg(RequestLog.latency_ms), Float).label("avg_latency_ms"),
-            cast(p95, Float).label("p95_latency_ms"),
-            cast(func.avg(RequestLog.ttft_ms), Float).label("avg_ttft_ms"),
-            func.count().filter(RequestLog.status.notin_(["ok", "blocked_injection"])).label("errors"),
-            func.count().filter(RequestLog.status == "blocked_injection").label("blocked"),
-        )
-        .where(in_window)
-        .group_by(RequestLog.key_id)
-        .subquery()
-    )
+    totals = select(RequestLog.key_id, *_metrics()).where(in_window).group_by(RequestLog.key_id).subquery()
+    overall_query = select(*_metrics()).where(in_window)
     month = (
         select(RequestLog.key_id, func.sum(tokens).label("month_tokens"))
         .where(RequestLog.created_at >= month_start)
@@ -114,6 +119,7 @@ async def usage(
     async with request.app.state.sessionmaker() as session:
         key_rows = (await session.execute(keys_query)).all()
         series_rows = (await session.execute(series_query)).mappings().all()
+        overall = (await session.execute(overall_query)).mappings().one()
 
     keys = []
     for row in key_rows:
@@ -139,7 +145,13 @@ async def usage(
                 usable_budget=budget - headroom(settings, api_key.max_concurrent) if budget else None,
             )
         )
-    return UsageReport(since=since, bucket=bucket, keys=keys, series=[UsagePoint(**r) for r in series_rows])
+    return UsageReport(
+        since=since,
+        bucket=bucket,
+        totals=UsageTotals(**overall),
+        keys=keys,
+        series=[UsagePoint(**r) for r in series_rows],
+    )
 
 
 class BlockedRequest(BaseModel):
