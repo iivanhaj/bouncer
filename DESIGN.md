@@ -201,6 +201,20 @@ stop someone deliberately getting around it ("a seatbelt, not a vault").
 - **ReDoS:** no nested quantifiers, bounded repetitions, and a pytest timing
   test with 100 KB adversarial input per pattern. Upgrade path: `google-re2`.
 - **Recorded:** counts per category (`redaction_counts`), never the values.
+- **Context, not just checksums:** card and Aadhaar numbers must not be glued to a letter,
+  digit or dash. A checksum alone passes ~10% of random numbers; found by a test where the
+  last 12 digits of a UUID passed the Aadhaar checksum.
+- **Performance, found by testing the whole path on 100 KB of hostile input:**
+  - The PEM "BEGIN … END" regex was quadratic with many BEGINs and no END (0.5 s on 80 KB).
+    Replaced by a linear search that stops at the first BEGIN with no END after it.
+  - Overlap resolution compared each match with every chosen match: 5.3 s on `"1." * 50_000`
+    (~12,500 IP-like matches). Now a per-character "taken" map: linear.
+  - Replacement rebuilt the string once per match; now built in one pass.
+  - The 32 KB body limit also caps redaction work per request.
+- **Measured** (`python -m evals.redaction_eval`, 99 hand-written prompts): catch rate 92.5%,
+  precision 98.7%, false-positive prompts 1/39 (2.6%). The misses are deliberate: obfuscation
+  ("john at gmail dot com"), UK local phone format, bare 10-digit numbers, IPv6, dashless
+  SSNs, free-form passwords. The one false positive is "1.2.3.4" used as a ratio.
 
 ---
 

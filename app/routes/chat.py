@@ -10,6 +10,7 @@ from app.concurrency import Slot
 from app.errors import GatewayError
 from app.models import ApiKey
 from app.ratelimit import Admission, enforce_rate_limit
+from app.redaction import Redactor
 from app.schemas import ChatCompletionRequest
 from app.usage import UsageRecord, status_for
 
@@ -96,8 +97,15 @@ async def chat_completions(
         record.upstream, record.route = route.upstream, route
         client = state.upstream_clients[route.upstream]
 
-        # Later steps slot in here: injection check, redaction.
-        payload = body.to_upstream_payload(settings.max_tokens_cap)
+        # Later step slots in here: injection check (on the original text, before redaction).
+
+        # Redact personal data and secrets before anything leaves the gateway. Only the counts
+        # per category are kept; the values and the placeholder mapping are never stored.
+        redactor = Redactor()
+        outgoing = body.model_copy(update={"messages": redactor.redact_messages(body.messages)})
+        record.redaction_counts = redactor.counts or None
+
+        payload = outgoing.to_upstream_payload(settings.max_tokens_cap)
         payload["model"] = route.upstream_model
 
         # Taken as late as possible, so slots are only held by requests about to reach the model.

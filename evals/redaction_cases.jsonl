@@ -1,0 +1,99 @@
+{"text": "Can you reply to the customer at maria.gonzalez@example.com about her refund?", "expected": {"EMAIL": 1}}
+{"text": "Forward this to ops-team+alerts@corp.example.org and cc j.smith@sub.example.co.uk", "expected": {"EMAIL": 2}}
+{"text": "My login is priya_r@example.in, I forgot my password", "expected": {"EMAIL": 1}}
+{"text": "Draft an email to HR@EXAMPLE.COM asking for leave", "expected": {"EMAIL": 1}}
+{"text": "Contacts: a@example.com, b@example.com, c@example.com", "expected": {"EMAIL": 3}}
+{"text": "Summarise this thread from noreply@notifications.example.net", "expected": {"EMAIL": 1}}
+{"text": "Is first.last.123@mail.example.com a valid address format?", "expected": {"EMAIL": 1}}
+{"text": "Write to support@example.io and mention ticket 48213", "expected": {"EMAIL": 1}}
+{"text": "Charge the card 4111 1111 1111 1111 for the annual plan", "expected": {"CREDIT_CARD": 1}}
+{"text": "Customer card: 5555-5555-5555-4444, expiry 08/27, please refund", "expected": {"CREDIT_CARD": 1}}
+{"text": "Amex 378282246310005 was declined, why?", "expected": {"CREDIT_CARD": 1}}
+{"text": "Use Discover 6011111111111117 for the test order", "expected": {"CREDIT_CARD": 1}}
+{"text": "Payment failed for 4012888888881881 and 5105105105105100", "expected": {"CREDIT_CARD": 2}}
+{"text": "JCB card number 3530 1113 3330 0000 needs verification", "expected": {"CREDIT_CARD": 1}}
+{"text": "Diners Club 30569309025904 on file", "expected": {"CREDIT_CARD": 1}}
+{"text": "Her SSN is 123-45-6789, can you fill in the form?", "expected": {"NATIONAL_ID": 1}}
+{"text": "Employee SSN 219-09-9999 for payroll", "expected": {"NATIONAL_ID": 1}}
+{"text": "Tax form shows 078-05-1120 as the SSN", "expected": {"NATIONAL_ID": 1}}
+{"text": "Aadhaar number 7181 9093 7865 for KYC", "expected": {"NATIONAL_ID": 1}}
+{"text": "Verify Aadhaar 997543231948 against the PAN record", "expected": {"NATIONAL_ID": 1}}
+{"text": "Aadhaar: 9601-8955-5979", "expected": {"NATIONAL_ID": 1}}
+{"text": "Two IDs: 7075 2917 0342 and 7181 9093 7865", "expected": {"NATIONAL_ID": 2}}
+{"text": "Call me on +1 415 555 0132 after 5pm", "expected": {"PHONE": 1}}
+{"text": "WhatsApp +91 98765 43210 for delivery updates", "expected": {"PHONE": 1}}
+{"text": "Office line (212) 555-0198, ask for Sam", "expected": {"PHONE": 1}}
+{"text": "Text 646-555-0147 when you arrive", "expected": {"PHONE": 1}}
+{"text": "His mobile is 98765 43210", "expected": {"PHONE": 1}}
+{"text": "International: +44 20 7946 0018", "expected": {"PHONE": 1}}
+{"text": "Reach the clinic at 415.555.0132", "expected": {"PHONE": 1}}
+{"text": "Support numbers: +1-800-555-0199 and +61 2 9876 5432", "expected": {"PHONE": 2}}
+{"text": "The database server at 10.0.12.45 keeps timing out", "expected": {"IP_ADDRESS": 1}}
+{"text": "Block traffic from 203.0.113.77 in the firewall", "expected": {"IP_ADDRESS": 1}}
+{"text": "SSH to 192.168.0.10 then to 172.16.5.4", "expected": {"IP_ADDRESS": 2}}
+{"text": "Why does curl to 127.0.0.1:8080 fail?", "expected": {"IP_ADDRESS": 1}}
+{"text": "Here is my AWS key AKIAIOSFODNN7EXAMPLE, why can't I list buckets?", "expected": {"SECRET": 1}}
+{"text": "Debug this: export GITHUB_TOKEN=ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789", "expected": {"SECRET": 1}}
+{"text": "client = OpenAI(api_key=\"sk-proj-Abc123Def456Ghi789Jkl012Mno\")", "expected": {"SECRET": 1}}
+{"text": "My Anthropic key sk-ant-api03-ZyXwVuTsRqPoNmLkJiHg-12345 stopped working", "expected": {"SECRET": 1}}
+{"text": "Slack bot token xoxb-2222222222-3333333333-AbCdEfGhIjKl is invalid", "expected": {"SECRET": 1}}
+{"text": "Decode this JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U", "expected": {"SECRET": 1}}
+{"text": "Why does this key fail?\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAu1SU1LfVLPHCozMxH2Mo4lgOEePzNm0tRgeLezV6ffAt0gun\n-----END RSA PRIVATE KEY-----", "expected": {"SECRET": 1}}
+{"text": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIA==\n-----END PRIVATE KEY----- is my ed25519 key", "expected": {"SECRET": 1}}
+{"text": "Gateway key bnc_0123456789ABCDEFGHIJabcdefghij0123456789ABC_0a1b2c leaked in logs", "expected": {"SECRET": 1}}
+{"text": "Session AKIAJ7EXAMPLEKEY1234 and token ghp_ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ", "expected": {"SECRET": 2}}
+{"text": "Customer Ana (ana@example.com, +1 415 555 0132) paid with 4111 1111 1111 1111", "expected": {"EMAIL": 1, "PHONE": 1, "CREDIT_CARD": 1}}
+{"text": "Ticket from 198.51.100.23: user bob@example.org says card 5555555555554444 was charged twice", "expected": {"IP_ADDRESS": 1, "EMAIL": 1, "CREDIT_CARD": 1}}
+{"text": "Onboarding: SSN 123-45-6789, phone 646-555-0147, email new.hire@example.com", "expected": {"NATIONAL_ID": 1, "PHONE": 1, "EMAIL": 1}}
+{"text": "KYC: Aadhaar 9975 4323 1948, mobile 98765 43210", "expected": {"NATIONAL_ID": 1, "PHONE": 1}}
+{"text": "Config dump: DB_HOST=10.1.2.3 AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE ADMIN_EMAIL=root@example.com", "expected": {"IP_ADDRESS": 1, "SECRET": 1, "EMAIL": 1}}
+{"text": "Log line: 2026-10-12T10:00:00Z login ok user=dev@example.com ip=203.0.113.9", "expected": {"EMAIL": 1, "IP_ADDRESS": 1}}
+{"text": "Please translate: 'Mi correo es lucia@example.es y mi teléfono +34 612 345 678'", "expected": {"EMAIL": 1, "PHONE": 1}}
+{"text": "Refund 4111-1111-1111-1111 and notify billing@example.com", "expected": {"CREDIT_CARD": 1, "EMAIL": 1}}
+{"text": "Card ending 1111? Full number 4111111111111111", "expected": {"CREDIT_CARD": 1}}
+{"text": "Email me at john at gmail dot com", "expected": {"EMAIL": 1}, "note": "deliberate obfuscation: out of scope (a seatbelt, not a vault), expected miss"}
+{"text": "Call our London office on 020 7946 0018", "expected": {"PHONE": 1}, "note": "UK local format without + is not one of the supported phone formats, expected miss"}
+{"text": "Number is 4155550132, call after lunch", "expected": {"PHONE": 1}, "note": "bare 10 digits are too ambiguous to flag, expected miss"}
+{"text": "Her IPv6 is 2001:db8::8a2e:370:7334", "expected": {"IP_ADDRESS": 1}, "note": "IPv6 not supported, expected miss"}
+{"text": "Card number 4111 1111 1111 1111 written as four one one one...", "expected": {"CREDIT_CARD": 1}}
+{"text": "SSN without dashes 123456789 in the old system", "expected": {"NATIONAL_ID": 1}, "note": "dashless SSN is too ambiguous, expected miss"}
+{"text": "Password for the db is hunter2", "expected": {"SECRET": 1}, "note": "free-form passwords are not a known secret format, expected miss"}
+{"text": "What is the capital of France?", "expected": {}}
+{"text": "Write a haiku about autumn leaves.", "expected": {}}
+{"text": "Explain how TCP handshakes work.", "expected": {}}
+{"text": "Order #4111111111111112 was shipped yesterday", "expected": {}, "note": "fails Luhn"}
+{"text": "Tracking number 1Z999AA10123456784", "expected": {}}
+{"text": "Upgrade from version 1.2.3 to 2.0.0-beta.4", "expected": {}}
+{"text": "Python 3.13.5 and Node 22.17.0 are installed", "expected": {}}
+{"text": "The meeting is on 2026-10-12 at 14:30", "expected": {}}
+{"text": "Invoice total is $1,234,567.89", "expected": {}}
+{"text": "ISBN 978-0-306-40615-7 is the textbook", "expected": {}}
+{"text": "Commit 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b broke the build", "expected": {}}
+{"text": "Request id 123e4567-e89b-12d3-a456-426614174000 failed", "expected": {}}
+{"text": "Unix time 1791802761 converted to a date please", "expected": {}}
+{"text": "Mention @maria in the Slack channel", "expected": {}}
+{"text": "Is jane@localhost a valid email for testing?", "expected": {}, "note": "no TLD"}
+{"text": "Compute 123456789 * 987654321", "expected": {}}
+{"text": "Zip code 94103 and 560001 are both valid", "expected": {}}
+{"text": "Matrix: [[1, 2, 3], [4, 5, 6]]", "expected": {}}
+{"text": "The ratio is 1.2.3.4 in the old notation", "expected": {}, "note": "not an IP, but looks exactly like one: a known, accepted false positive"}
+{"text": "Version 999.0.1.2 of the firmware", "expected": {}, "note": "octet over 255"}
+{"text": "Use the sk-learn library for classification", "expected": {}, "note": "sk- but too short to be a key"}
+{"text": "Explain what an AWS access key id looks like", "expected": {}}
+{"text": "What does -----BEGIN CERTIFICATE----- mean?", "expected": {}, "note": "certificate, not a private key"}
+{"text": "The phone model is iPhone 15 Pro", "expected": {}}
+{"text": "Account number 000123456 at the bank", "expected": {}}
+{"text": "SSN format is XXX-XX-XXXX", "expected": {}}
+{"text": "The example SSN 000-12-3456 is invalid by design", "expected": {}}
+{"text": "Order 2341 2341 2345 is pending", "expected": {}, "note": "12 digits but fails Verhoeff"}
+{"text": "Batch 6656 3212 2330 processed", "expected": {}, "note": "12 digits but fails Verhoeff"}
+{"text": "Temperature range 98.6 to 104.0 degrees", "expected": {}}
+{"text": "Coordinates 37.7749, -122.4194", "expected": {}}
+{"text": "Download from https://example.com/files/report.pdf", "expected": {}}
+{"text": "The file is at C:\\Users\\dev\\project\\main.py", "expected": {}}
+{"text": "Use base64 for aGVsbG8gd29ybGQ=", "expected": {}}
+{"text": "Sort the list 5, 3, 9, 1, 7 in ascending order", "expected": {}}
+{"text": "Train 12951 leaves at 16:55 from platform 3", "expected": {}}
+{"text": "Population of India is about 1,428,627,663", "expected": {}}
+{"text": "Run docker run -p 8000:8000 bouncer", "expected": {}}
+{"text": "Error code 0x80070005 when installing", "expected": {}}
