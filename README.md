@@ -58,6 +58,8 @@ the budget check and released **after** the tokens are counted, which is what ma
 budget a hard limit. Metrics go to Prometheus on a separate internal port; raw prompts are
 never stored anywhere.
 
+**Want to try it?** Follow [docs/TRY_IT.md](docs/TRY_IT.md): a 15-minute hands-on tour.
+
 ## Run the whole stack in Docker
 
 Needs Docker Desktop. For real answers, also Ollama running natively with a model pulled
