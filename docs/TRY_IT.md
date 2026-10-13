@@ -128,14 +128,32 @@ Refresh http://127.0.0.1:3000:
 
 ## 10. Metrics in Prometheus
 
-Open http://127.0.0.1:9090 and try:
+Prometheus runs **one query at a time**: paste one into the box at http://127.0.0.1:9090,
+press **Execute**, and use the **Table** tab for current values or **Graph** for a chart.
+Or click a link below: each opens with the query filled in.
 
-```
-sum by (status) (bouncer_requests_total)
-sum by (reason) (bouncer_rejected_total)
-sum by (rule) (bouncer_blocked_total)
-histogram_quantile(0.95, sum by (le) (rate(bouncer_request_duration_seconds_bucket[5m])))
-```
+1. Requests by outcome (ok, blocked_injection, bad_request, ...) ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=sum%20by%20%28status%29%20%28bouncer_requests_total%29)):
+   ```
+   sum by (status) (bouncer_requests_total)
+   ```
+
+2. Requests turned away before the pipeline (unauthorized, rate_limited, body_too_large) ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=sum%20by%20%28reason%29%20%28bouncer_rejected_total%29)):
+   ```
+   sum by (reason) (bouncer_rejected_total)
+   ```
+
+3. Which injection rules fired on blocked requests ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=sum%20by%20%28rule%29%20%28bouncer_blocked_total%29)):
+   ```
+   sum by (rule) (bouncer_blocked_total)
+   ```
+
+4. p95 request latency in seconds over the last 5 minutes ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=histogram_quantile%280.95%2C%20sum%20by%20%28le%29%20%28rate%28bouncer_request_duration_seconds_bucket%5B5m%5D%29%29%29)):
+   ```
+   histogram_quantile(0.95, sum by (le) (rate(bouncer_request_duration_seconds_bucket[5m])))
+   ```
+
+If a query shows no data, send a few requests first (steps 2-7) and wait ~5 seconds for
+the next scrape.
 
 ## Optional
 
