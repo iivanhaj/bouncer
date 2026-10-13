@@ -1,8 +1,8 @@
 """A fake OpenAI-compatible model server with predictable timing.
 
 Load tests run against this instead of a real model: a CPU model is always the bottleneck,
-so only a fast, deterministic upstream shows the gateway's own overhead (SPEC.md, "How I'll
-measure it"). Timing is configured with environment variables:
+so only a fast, deterministic upstream shows the gateway's own overhead.
+Timing is configured with environment variables:
 
     MOCK_TTFT_MS          delay before the first token        (default 100)
     MOCK_TOKEN_DELAY_MS   delay between tokens                (default 10)

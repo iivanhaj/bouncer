@@ -34,8 +34,8 @@ Guiding principle: no design is free of weaknesses. Every weakness here is
 Injection and redaction run before the slot is acquired, so slots are only
 held by requests that will actually reach the model.
 
-### Changes from SPEC.md
-- Injection check runs **before** redaction (spec had the reverse).
+### Changes from the original plan
+- Injection check runs **before** redaction (the first draft had the reverse).
 - Added concurrency limit, key expiry, field allowlist, `/readyz`.
 - Data model additions listed under "Data model".
 
