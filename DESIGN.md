@@ -1,4 +1,4 @@
-# Bouncer — Design Decisions
+# Model Guard — Design Decisions
 
 This file records every design decision, the reasoning behind it, and the
 loopholes it closes. Each section ends with a plain-language explanation for
@@ -45,10 +45,10 @@ held by requests that will actually reach the model.
 
 | Decision | Choice |
 |---|---|
-| Key format | `bnc_` + 32 random bytes (`secrets.token_bytes`) + 6-char checksum |
+| Key format | `mgd_` + 32 random bytes (`secrets.token_bytes`) + 6-char checksum |
 | Storage | SHA-256 of the key. HMAC-SHA256 with a server secret is the upgrade path |
 | Lookup | `WHERE key_hash = ?` on a unique index |
-| Display | First ~8 chars after `bnc_` stored as `key_prefix`, for display only |
+| Display | First ~8 chars after `mgd_` stored as `key_prefix`, for display only |
 | Caching | None in v1. Redis cache, deleted on revoke, is a week-3 optimization candidate |
 | Errors | Missing, malformed, unknown, revoked and expired all return the **same** 401 in OpenAI error format |
 | Admin | `ADMIN_TOKEN` env var. Refuse to start if missing or under 32 chars. Compare with `hmac.compare_digest`. Team keys can't use `/admin/*`; the admin token can't use `/v1/*` |
@@ -63,7 +63,7 @@ guessed. A slow hash would only add latency to every request.
 something about the hash, and knowing a hash doesn't help you build a key that
 produces it.
 
-**Why the `bnc_` prefix?** Secret scanners like GitHub's can recognize it if
+**Why the `mgd_` prefix?** Secret scanners like GitHub's can recognize it if
 a key is committed to a repo.
 
 **Why is expiry optional rather than default?** Keys are used by machines.
@@ -184,7 +184,7 @@ stop someone deliberately getting around it ("a seatbelt, not a vault").
 | Phone | Explicit list of formats; requires `+` or separators |
 | National IDs | US SSN with its validity rules; others chosen explicitly, using their checksum where they have one |
 | IPv4 | Regex + each octet ≤ 255 |
-| Secrets | Known formats only: AWS `AKIA…`, `ghp_`, `sk-`, `xox…`, PEM private keys, JWTs, `bnc_` |
+| Secrets | Known formats only: AWS `AKIA…`, `ghp_`, `sk-`, `xox…`, PEM private keys, JWTs, `mgd_` |
 | Names, addresses | **Non-goal** (needs named-entity recognition, an ML model) |
 
 - **Overlaps:** collect all matches and resolve by priority:
@@ -429,7 +429,7 @@ or content the apps pass along (web pages, documents, tool output).
   let any client create unlimited time series; models are labelled by their `models.yaml` name
   or `unlisted`. Tested with an attacker-chosen model name.
 - **Rejections before the pipeline** (401, 429, 413) have their own counter,
-  `bouncer_rejected_total{reason}`, since they never reach the usage log.
+  `modelguard_rejected_total{reason}`, since they never reach the usage log.
 - **Logs** are structured JSON with `request_id`. Prompt text is never logged.
 
 ---

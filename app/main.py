@@ -116,7 +116,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         await engine.dispose()
         await redis_client.aclose()
 
-    app = FastAPI(title="Bouncer", lifespan=lifespan)
+    app = FastAPI(title="Model Guard", lifespan=lifespan)
     app.state.settings = settings
     app.state.models = registry
     app.state.injection = injection

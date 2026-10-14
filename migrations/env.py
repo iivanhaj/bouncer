@@ -18,7 +18,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name, disable_existing_loggers=False)
 
-# The database URL comes from BOUNCER_DATABASE_URL (or .env) unless a caller, like the test
+# The database URL comes from MODELGUARD_DATABASE_URL (or .env) unless a caller, like the test
 # suite, has already set one on the Alembic config.
 if not config.get_main_option("sqlalchemy.url"):
     config.set_main_option("sqlalchemy.url", DatabaseSettings().database_url)

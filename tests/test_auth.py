@@ -194,7 +194,7 @@ def test_create_key_rejects_unknown_fields(client):
 
 
 def test_settings_refuse_missing_admin_token(monkeypatch):
-    monkeypatch.delenv("BOUNCER_ADMIN_TOKEN", raising=False)
+    monkeypatch.delenv("MODELGUARD_ADMIN_TOKEN", raising=False)
 
     with pytest.raises(ValidationError):
         Settings(_env_file=None)

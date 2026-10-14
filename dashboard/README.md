@@ -1,6 +1,6 @@
-# Bouncer dashboard
+# Model Guard dashboard
 
-Admin console for the Bouncer gateway: an overview of traffic at the door, API keys, usage and
+Admin console for the Model Guard gateway: an overview of traffic at the door, API keys, usage and
 blocked requests. Next.js 16 with [shadcn/ui](https://ui.shadcn.com) components (started from
 its `dashboard-01` block) and Tailwind CSS 4.
 
@@ -11,7 +11,7 @@ it is published on localhost only.
 
 ```bash
 npm install
-BOUNCER_ADMIN_TOKEN=<admin token> GATEWAY_URL=http://localhost:8000 npm run dev
+MODELGUARD_ADMIN_TOKEN=<admin token> GATEWAY_URL=http://localhost:8000 npm run dev
 ```
 
 Then open http://127.0.0.1:3000.

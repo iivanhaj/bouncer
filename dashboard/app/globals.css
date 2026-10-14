@@ -52,7 +52,7 @@
 }
 
 :root {
-  /* Bouncer palette. Paper and ink are cool blue-greys; the brand accent is velvet-rope
+  /* Model Guard palette. Paper and ink are cool blue-greys; the brand accent is velvet-rope
      burgundy. served / blocked / failed carry meaning wherever they appear. */
   --background: #eef1f5;
   --foreground: #1c2333;

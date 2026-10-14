@@ -1,7 +1,7 @@
-"""Talk to Bouncer with the official OpenAI Python SDK: only the base URL and key change.
+"""Talk to Model Guard with the official OpenAI Python SDK: only the base URL and key change.
 
 pip install openai
-$env:BOUNCER_KEY = "bnc_..."        # PowerShell (or: export BOUNCER_KEY=bnc_... in bash)
+$env:MODELGUARD_KEY = "mgd_..."        # PowerShell (or: export MODELGUARD_KEY=mgd_... in bash)
 python scripts/try_openai_sdk.py
 """
 
@@ -11,7 +11,7 @@ import time
 
 from openai import APIStatusError, OpenAI
 
-client = OpenAI(base_url="http://localhost:8000/v1", api_key=os.environ["BOUNCER_KEY"])
+client = OpenAI(base_url="http://localhost:8000/v1", api_key=os.environ["MODELGUARD_KEY"])
 model = sys.argv[1] if len(sys.argv) > 1 else "qwen2.5:0.5b"
 
 print(f"Models the gateway allows: {[m.id for m in client.models.list()]}\n")

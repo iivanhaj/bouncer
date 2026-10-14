@@ -40,7 +40,7 @@
 {"text": "Decode this JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U", "expected": {"SECRET": 1}}
 {"text": "Why does this key fail?\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAu1SU1LfVLPHCozMxH2Mo4lgOEePzNm0tRgeLezV6ffAt0gun\n-----END RSA PRIVATE KEY-----", "expected": {"SECRET": 1}}
 {"text": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIA==\n-----END PRIVATE KEY----- is my ed25519 key", "expected": {"SECRET": 1}}
-{"text": "Gateway key bnc_0123456789ABCDEFGHIJabcdefghij0123456789ABC_0a1b2c leaked in logs", "expected": {"SECRET": 1}}
+{"text": "Gateway key mgd_0123456789ABCDEFGHIJabcdefghij0123456789ABC_0a1b2c leaked in logs", "expected": {"SECRET": 1}}
 {"text": "Session AKIAJ7EXAMPLEKEY1234 and token ghp_ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ", "expected": {"SECRET": 2}}
 {"text": "Customer Ana (ana@example.com, +1 415 555 0132) paid with 4111 1111 1111 1111", "expected": {"EMAIL": 1, "PHONE": 1, "CREDIT_CARD": 1}}
 {"text": "Ticket from 198.51.100.23: user bob@example.org says card 5555555555554444 was charged twice", "expected": {"IP_ADDRESS": 1, "EMAIL": 1, "CREDIT_CARD": 1}}
@@ -95,5 +95,5 @@
 {"text": "Sort the list 5, 3, 9, 1, 7 in ascending order", "expected": {}}
 {"text": "Train 12951 leaves at 16:55 from platform 3", "expected": {}}
 {"text": "Population of India is about 1,428,627,663", "expected": {}}
-{"text": "Run docker run -p 8000:8000 bouncer", "expected": {}}
+{"text": "Run docker run -p 8000:8000 modelguard", "expected": {}}
 {"text": "Error code 0x80070005 when installing", "expected": {}}

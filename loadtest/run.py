@@ -4,7 +4,7 @@ For each request rate, the same load is sent to the mock upstream directly and t
 in front of it; the difference is what the gateway costs. Each measurement is a warm-up run
 followed by RUNS measured runs, and the median is reported.
 
-Needs the Compose stack running (`docker compose --profile app up -d`) and BOUNCER_ADMIN_TOKEN
+Needs the Compose stack running (`docker compose --profile app up -d`) and MODELGUARD_ADMIN_TOKEN
 in .env. k6 runs in Docker on the Compose network, so host networking doesn't add noise.
 
     python -m loadtest.run                      # default rates
@@ -23,16 +23,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "loadtest" / "results"
 K6_IMAGE = "grafana/k6:0.54.0"
-NETWORK = "bouncer_default"
+NETWORK = "modelguard_default"
 TARGETS = {"direct": "http://mock-upstream:8001", "gateway": "http://gateway:8000"}
 RUNS = 3
 
 
 def admin_token() -> str:
     for line in (ROOT / ".env").read_text().splitlines():
-        if line.startswith("BOUNCER_ADMIN_TOKEN="):
+        if line.startswith("MODELGUARD_ADMIN_TOKEN="):
             return line.split("=", 1)[1].strip()
-    raise SystemExit("BOUNCER_ADMIN_TOKEN not found in .env")
+    raise SystemExit("MODELGUARD_ADMIN_TOKEN not found in .env")
 
 
 def create_load_test_key() -> str:

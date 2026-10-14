@@ -6,7 +6,7 @@ from app import keys
 def test_generated_key_has_expected_format():
     key = keys.generate_key()
 
-    assert re.fullmatch(r"bnc_[0-9A-Za-z]{43}_[0-9a-f]{6}", key)
+    assert re.fullmatch(r"mgd_[0-9A-Za-z]{43}_[0-9a-f]{6}", key)
     assert keys.is_well_formed(key)
 
 
@@ -24,7 +24,7 @@ def test_typo_in_key_fails_checksum():
 
 def test_malformed_keys_are_rejected():
     valid = keys.generate_key()
-    for bad in ["", "bnc_", "sk-abc", valid.replace("bnc_", "xyz_"), valid + "0", valid[:-1], valid.upper()]:
+    for bad in ["", "mgd_", "sk-abc", valid.replace("mgd_", "xyz_"), valid + "0", valid[:-1], valid.upper()]:
         assert not keys.is_well_formed(bad), bad
 
 

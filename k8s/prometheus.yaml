@@ -1,6 +1,6 @@
 # Prometheus finds every gateway pod through the headless gateway-metrics service (DNS service
 # discovery), so it needs no Kubernetes API permissions. UI:
-#   kubectl -n bouncer port-forward svc/prometheus 9090:9090
+#   kubectl -n modelguard port-forward svc/prometheus 9090:9090
 apiVersion: v1
 kind: Service
 metadata:

@@ -31,7 +31,7 @@ async def list_models(request: Request, api_key: ApiKey = Depends(require_api_ke
     return {
         "object": "list",
         "data": [
-            {"id": name, "object": "model", "created": 0, "owned_by": "bouncer"}
+            {"id": name, "object": "model", "created": 0, "owned_by": "modelguard"}
             for name in request.app.state.models.models
         ],
     }

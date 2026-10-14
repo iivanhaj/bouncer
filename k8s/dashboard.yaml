@@ -1,6 +1,6 @@
 # The admin dashboard holds the admin token and v1 has no logins, so anyone who can reach it is
 # the admin (DESIGN.md §7). It has a ClusterIP service only and no ingress route: the way in is
-#   kubectl -n bouncer port-forward svc/dashboard 3000:3000
+#   kubectl -n modelguard port-forward svc/dashboard 3000:3000
 apiVersion: v1
 kind: Service
 metadata:
@@ -27,12 +27,12 @@ spec:
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: dashboard
-          image: bouncer-dashboard:local
+          image: modelguard-dashboard:local
           ports: [{ containerPort: 3000 }]
           env:
             - { name: GATEWAY_URL, value: "http://gateway:8000" }
-            - name: BOUNCER_ADMIN_TOKEN
-              valueFrom: { secretKeyRef: { name: bouncer-secrets, key: admin-token } }
+            - name: MODELGUARD_ADMIN_TOKEN
+              valueFrom: { secretKeyRef: { name: modelguard-secrets, key: admin-token } }
           readinessProbe:
             tcpSocket: { port: 3000 }
           resources:

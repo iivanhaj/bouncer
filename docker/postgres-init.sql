@@ -1,1 +1,1 @@
-CREATE DATABASE bouncer_test OWNER bouncer;
+CREATE DATABASE modelguard_test OWNER modelguard;

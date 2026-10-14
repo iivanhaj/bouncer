@@ -23,13 +23,13 @@ spec:
         - name: postgres
           image: postgres:16-alpine
           env:
-            - { name: POSTGRES_USER, value: bouncer }
-            - { name: POSTGRES_DB, value: bouncer }
+            - { name: POSTGRES_USER, value: modelguard }
+            - { name: POSTGRES_DB, value: modelguard }
             - name: POSTGRES_PASSWORD
-              valueFrom: { secretKeyRef: { name: bouncer-secrets, key: postgres-password } }
+              valueFrom: { secretKeyRef: { name: modelguard-secrets, key: postgres-password } }
           ports: [{ containerPort: 5432 }]
           readinessProbe:
-            exec: { command: ["pg_isready", "-U", "bouncer"] }
+            exec: { command: ["pg_isready", "-U", "modelguard"] }
             periodSeconds: 3
           resources:
             requests: { cpu: 100m, memory: 256Mi }

@@ -7,9 +7,9 @@ import asyncpg
 from app.config import Settings
 
 TEST_DATABASE_URL = os.environ.get(
-    "BOUNCER_TEST_DATABASE_URL", "postgresql+asyncpg://bouncer:bouncer@localhost:5432/bouncer_test"
+    "MODELGUARD_TEST_DATABASE_URL", "postgresql+asyncpg://modelguard:modelguard@localhost:5432/modelguard_test"
 )
-TEST_REDIS_URL = os.environ.get("BOUNCER_TEST_REDIS_URL", "redis://localhost:6379/1")
+TEST_REDIS_URL = os.environ.get("MODELGUARD_TEST_REDIS_URL", "redis://localhost:6379/1")
 ADMIN_TOKEN = "test-admin-token-0123456789abcdefghijklmnop"
 ADMIN_HEADERS = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
 UPSTREAM = "http://upstream.test"

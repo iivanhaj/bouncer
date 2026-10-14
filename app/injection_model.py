@@ -80,7 +80,7 @@ class InjectionClassifier:
 
     def save(self, path: Path, metadata: dict) -> None:
         payload = {
-            "format": "bouncer-injection-classifier/1",
+            "format": "modelguard-injection-classifier/1",
             "metadata": metadata,
             "threshold": self.threshold,
             "intercept": self.intercept,

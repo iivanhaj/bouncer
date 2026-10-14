@@ -160,7 +160,7 @@ def test_401_and_rate_limited_429_are_not_logged(upstream):
     upstream.mock(return_value=httpx.Response(200, json=COMPLETION))
     with TestClient(create_app(make_settings())) as client:
         key = create_key(client, rpm_limit=1)
-        client.post("/v1/chat/completions", json=CHAT, headers={"Authorization": "Bearer bnc_nope"})
+        client.post("/v1/chat/completions", json=CHAT, headers={"Authorization": "Bearer mgd_nope"})
         auth = {"Authorization": f"Bearer {key['key']}"}
         assert client.post("/v1/chat/completions", json=CHAT, headers=auth).status_code == 200
         assert client.post("/v1/chat/completions", json=CHAT, headers=auth).status_code == 429

@@ -1,6 +1,6 @@
-"""API key format: bnc_<43 base62 chars>_<6 hex checksum>.
+"""API key format: mgd_<43 base62 chars>_<6 hex checksum>.
 
-- "bnc_" makes leaked keys recognisable to secret scanners (like GitHub's).
+- "mgd_" makes leaked keys recognisable to secret scanners (like GitHub's).
 - The body is 32 random bytes (256 bits), so keys can't be guessed.
 - The checksum lets the gateway reject typos and junk keys without a database query.
 """
@@ -10,7 +10,7 @@ import re
 import secrets
 import string
 
-PREFIX = "bnc_"
+PREFIX = "mgd_"
 _ALPHABET = string.digits + string.ascii_letters  # base62: no "_" or "-", so the separators stay unambiguous
 _BODY_LENGTH = 43  # 32 bytes need at most 43 base62 characters
 _CHECKSUM_LENGTH = 6

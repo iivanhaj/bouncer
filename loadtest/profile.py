@@ -14,7 +14,7 @@ import time
 
 from loadtest.run import K6_IMAGE, NETWORK, RESULTS, ROOT, create_load_test_key
 
-GATEWAY_CONTAINER = "bouncer-gateway-1"
+GATEWAY_CONTAINER = "modelguard-gateway-1"
 
 
 def frame_name(frame: str) -> str:

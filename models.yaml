@@ -1,7 +1,7 @@
 # Models the gateway routes to. This is an allowlist: a model not listed here is rejected with
 # 404 before any upstream is contacted (DESIGN.md §5).
 #
-#   upstream          name of an upstream in BOUNCER_UPSTREAMS (see app/config.py)
+#   upstream          name of an upstream in MODELGUARD_UPSTREAMS (see app/config.py)
 #   upstream_model    the model's name on that upstream
 #   *_price_per_1k    notional USD per 1,000 tokens, used to compute cost in the usage log.
 #                     Local models cost nothing to run; these show what a hosted equivalent would cost.

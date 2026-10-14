@@ -11,13 +11,15 @@ class DatabaseSettings(BaseSettings):
 
     # hide_input_in_errors: a rejected setting (e.g. an admin token one character too short)
     # must never be printed in the startup error, where it would end up in logs.
-    model_config = SettingsConfigDict(env_prefix="BOUNCER_", env_file=".env", extra="ignore", hide_input_in_errors=True)
+    model_config = SettingsConfigDict(
+        env_prefix="MODELGUARD_", env_file=".env", extra="ignore", hide_input_in_errors=True
+    )
 
-    database_url: str = "postgresql+asyncpg://bouncer:bouncer@localhost:5432/bouncer"
+    database_url: str = "postgresql+asyncpg://modelguard:modelguard@localhost:5432/modelguard"
 
 
 class Settings(DatabaseSettings):
-    """Gateway settings, read from environment variables prefixed BOUNCER_ (or a .env file)."""
+    """Gateway settings, read from environment variables prefixed MODELGUARD_ (or a .env file)."""
 
     # Required, at least 32 characters: the gateway refuses to start without a strong admin token.
     admin_token: SecretStr = Field(min_length=32)
@@ -28,7 +30,7 @@ class Settings(DatabaseSettings):
     rate_limit_window_seconds: float = 60.0
 
     # Upstream name -> base URL. Set as JSON in the environment, e.g.
-    # BOUNCER_UPSTREAMS='{"ollama": "http://host.docker.internal:11434", "mock": "http://mock-upstream:8001"}'
+    # MODELGUARD_UPSTREAMS='{"ollama": "http://host.docker.internal:11434", "mock": "http://mock-upstream:8001"}'
     upstreams: dict[str, str] = {"ollama": "http://localhost:11434", "mock": "http://localhost:8001"}
     # Which models exist and which upstream serves each one (the model allowlist).
     models_file: Path = Path("models.yaml")

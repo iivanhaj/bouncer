@@ -1,5 +1,5 @@
 [project]
-name = "bouncer"
+name = "modelguard"
 version = "0.1.0"
 description = "Self-hosted LLM gateway with security guardrails"
 requires-python = ">=3.12"
@@ -7,7 +7,7 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "httpx>=0.27",
-    # Not imported by Bouncer. httpcore tries `import sniffio` on every lock it creates; when it is
+    # Not imported by Model Guard. httpcore tries `import sniffio` on every lock it creates; when it is
     # missing, the failed import is retried (and the filesystem searched) on every request. Found
     # by profiling under load: 7% of the gateway's CPU (loadtest/RESULTS.md).
     "sniffio>=1.3",

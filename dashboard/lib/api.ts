@@ -7,8 +7,8 @@ import "server-only";
 const GATEWAY_URL = process.env.GATEWAY_URL ?? "http://localhost:8000";
 
 function adminToken(): string {
-  const token = process.env.BOUNCER_ADMIN_TOKEN;
-  if (!token) throw new Error("BOUNCER_ADMIN_TOKEN is not set for the dashboard");
+  const token = process.env.MODELGUARD_ADMIN_TOKEN;
+  if (!token) throw new Error("MODELGUARD_ADMIN_TOKEN is not set for the dashboard");
   return token;
 }
 

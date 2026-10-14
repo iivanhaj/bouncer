@@ -1,9 +1,9 @@
-# Bouncer
+# Model Guard
 
-[![CI](https://github.com/iivanhaj/bouncer/actions/workflows/ci.yml/badge.svg)](https://github.com/iivanhaj/bouncer/actions/workflows/ci.yml)
+[![CI](https://github.com/iivanhaj/model-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/iivanhaj/model-guard/actions/workflows/ci.yml)
 
 **A self-hosted LLM gateway with security guardrails.** One front door for every application
-that calls a language model: Bouncer checks who is calling, enforces rate limits and token
+that calls a language model: Model Guard checks who is calling, enforces rate limits and token
 budgets, removes personal data and secrets from prompts, blocks prompt-injection attempts,
 streams the answer back, and records what everything cost.
 
@@ -12,7 +12,7 @@ It speaks the OpenAI API, so an existing OpenAI client switches over by changing
 ```python
 from openai import OpenAI
 
-client = OpenAI(base_url="http://localhost:8000/v1", api_key="bnc_...")  # a Bouncer key
+client = OpenAI(base_url="http://localhost:8000/v1", api_key="mgd_...")  # a Model Guard key
 client.chat.completions.create(model="qwen2.5:0.5b", messages=[{"role": "user", "content": "Hi"}])
 ```
 
@@ -20,7 +20,7 @@ client.chat.completions.create(model="qwen2.5:0.5b", messages=[{"role": "user", 
 
 When a team starts using LLMs, every app talks to the model directly. Nobody knows who is
 spending what, one runaway script can exhaust the budget, people paste customer emails and API
-keys into prompts, and nothing stands between a prompt-injection attack and the model. Bouncer
+keys into prompts, and nothing stands between a prompt-injection attack and the model. Model Guard
 puts all of that in one place.
 
 ## Features
@@ -30,7 +30,7 @@ puts all of that in one place.
 Server-sent events are relayed as the model generates them; if the client disconnects, the
 upstream request is cancelled so the model stops generating.
 
-**Access control.** Per-team API keys (`bnc_` prefix, checksum, 256 random bits), stored only as
+**Access control.** Per-team API keys (`mgd_` prefix, checksum, 256 random bits), stored only as
 SHA-256 hashes and shown once at creation. Optional expiry; soft revocation keeps usage history.
 Every auth failure returns the same 401.
 
@@ -104,7 +104,7 @@ Requirements: Docker Desktop (or Docker Engine with Compose) and, for real model
 
 ```bash
 ollama pull qwen2.5:0.5b
-cp .env.example .env    # then set BOUNCER_ADMIN_TOKEN (32+ characters; see the file)
+cp .env.example .env    # then set MODELGUARD_ADMIN_TOKEN (32+ characters; see the file)
 docker compose --profile app up -d --build --wait
 ```
 
@@ -121,7 +121,7 @@ Create a key in the dashboard (**API keys → New key**; set requests per minute
 rate limit quickly) and copy it: it is shown once. Then, in PowerShell:
 
 ```powershell
-$key = "bnc_PASTE_YOUR_KEY_HERE"
+$key = "mgd_PASTE_YOUR_KEY_HERE"
 $h = @{ Authorization = "Bearer $key" }
 function Ask($text, $model = "qwen2.5:0.5b") {
   $body = @{ model = $model; max_tokens = 60; messages = @(@{ role = "user"; content = $text }) } | ConvertTo-Json -Depth 5
@@ -138,7 +138,7 @@ function Ask($text, $model = "qwen2.5:0.5b") {
 | Redaction | `Ask "Repeat this sentence exactly and nothing else: my email is jane@example.com and my card is 4111 1111 1111 1111"` | The model can only repeat `[EMAIL_1]` and `[CREDIT_CARD_1]` |
 | Rate limit | `1..6 \| ForEach-Object { Ask "hi" "mock" }` | `429 Rate limit reached` once the key's limit is used up |
 | Model allowlist | `Ask "hi" "gpt-4o"` | `404 The model 'gpt-4o' does not exist or is not available` |
-| Streaming with the OpenAI SDK | `pip install openai`, `$env:BOUNCER_KEY = $key`, `python scripts/try_openai_sdk.py` | Tokens printed as they're generated, token usage, and a blocked attempt as a normal SDK error |
+| Streaming with the OpenAI SDK | `pip install openai`, `$env:MODELGUARD_KEY = $key`, `python scripts/try_openai_sdk.py` | Tokens printed as they're generated, token usage, and a blocked attempt as a normal SDK error |
 
 Then open the dashboard: the overview splits your requests into served, blocked and failed, and
 the **Blocked** page lists your blocked attempts with the rules that fired, never the prompt
@@ -164,21 +164,21 @@ text. The full walkthrough, including Prometheus queries and monitor mode, is in
 
 ## Configuration
 
-Settings are environment variables prefixed `BOUNCER_` (or a `.env` file); defaults are in
+Settings are environment variables prefixed `MODELGUARD_` (or a `.env` file); defaults are in
 [app/config.py](app/config.py). The most relevant:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `BOUNCER_ADMIN_TOKEN` | *(required)* | Admin API token; the gateway refuses to start without 32+ characters |
-| `BOUNCER_UPSTREAMS` | Ollama on localhost, the mock on :8001 | Upstream name to base URL, as JSON |
-| `BOUNCER_MODELS_FILE` | `models.yaml` | The model allowlist: routing and prices per model |
-| `BOUNCER_INJECTION_MODE` | `block` | `monitor` logs what the rules would block, without blocking |
-| `BOUNCER_INJECTION_CLASSIFIER` | `true` | Enable the classifier layer |
-| `BOUNCER_INJECTION_CLASSIFIER_MODE` | `block` | `monitor` logs classifier-only hits without blocking |
-| `BOUNCER_MAX_TOKENS_CAP` | `2048` | Maximum completion tokens per request |
-| `BOUNCER_MAX_BODY_BYTES` | `32768` | Maximum request size |
-| `BOUNCER_REDIS_TIMEOUT_MS` | `100` | Redis timeout; if Redis is unreachable, the gateway fails closed (503) |
-| `BOUNCER_METRICS_PORT` | `9100` | Prometheus metrics port (never published by Compose) |
+| `MODELGUARD_ADMIN_TOKEN` | *(required)* | Admin API token; the gateway refuses to start without 32+ characters |
+| `MODELGUARD_UPSTREAMS` | Ollama on localhost, the mock on :8001 | Upstream name to base URL, as JSON |
+| `MODELGUARD_MODELS_FILE` | `models.yaml` | The model allowlist: routing and prices per model |
+| `MODELGUARD_INJECTION_MODE` | `block` | `monitor` logs what the rules would block, without blocking |
+| `MODELGUARD_INJECTION_CLASSIFIER` | `true` | Enable the classifier layer |
+| `MODELGUARD_INJECTION_CLASSIFIER_MODE` | `block` | `monitor` logs classifier-only hits without blocking |
+| `MODELGUARD_MAX_TOKENS_CAP` | `2048` | Maximum completion tokens per request |
+| `MODELGUARD_MAX_BODY_BYTES` | `32768` | Maximum request size |
+| `MODELGUARD_REDIS_TIMEOUT_MS` | `100` | Redis timeout; if Redis is unreachable, the gateway fails closed (503) |
+| `MODELGUARD_METRICS_PORT` | `9100` | Prometheus metrics port (never published by Compose) |
 
 ## Deployment
 
@@ -229,7 +229,7 @@ uvicorn app.main:create_app --factory --reload
 ```
 
 ```bash
-pytest                                  # uses the bouncer_test database and Redis db 1
+pytest                                  # uses the modelguard_test database and Redis db 1
 ruff check . && ruff format --check .
 python -m evals.injection_eval          # injection detection, rules vs rules + classifier
 python -m evals.redaction_eval          # redaction quality
@@ -237,7 +237,7 @@ python -m loadtest.run --rates 25 50    # needs the Compose stack (see loadtest/
 ```
 
 The dashboard is a Next.js app in [dashboard/](dashboard/) (`npm install`, then
-`BOUNCER_ADMIN_TOKEN=... GATEWAY_URL=http://localhost:8000 npm run dev`).
+`MODELGUARD_ADMIN_TOKEN=... GATEWAY_URL=http://localhost:8000 npm run dev`).
 
 ## Project layout
 

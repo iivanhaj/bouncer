@@ -1,6 +1,6 @@
 # Prompt-injection detection results
 
-How well Bouncer's two layers (rules, then a small classifier) catch prompt injection, measured on
+How well Model Guard's two layers (rules, then a small classifier) catch prompt injection, measured on
 four public datasets. Reproduce with `python -m evals.injection_benchmark` and
 `python -m evals.ceiling_protectai` (both need `pip install -e ".[research]"`); the shipped model is trained by
 `python -m evals.train_injection_classifier`. Data and licenses: [data/README.md](data/README.md).
@@ -68,7 +68,7 @@ dedicated model blocks a noticeable share of unfamiliar honest prompts.
 ## Limits, stated plainly
 
 - Train and test splits come from the same four datasets; real traffic will differ. Run the
-  classifier in **monitor mode** (`BOUNCER_INJECTION_CLASSIFIER_MODE=monitor`) on your own traffic
+  classifier in **monitor mode** (`MODELGUARD_INJECTION_CLASSIFIER_MODE=monitor`) on your own traffic
   first: it logs what it would block (rule `ml-classifier`) without blocking, so its false-positive
   rate can be checked before it is trusted. Rule-based blocking is unaffected.
 - The unseen-data numbers show the real risk is false positives on unfamiliar honest text, not

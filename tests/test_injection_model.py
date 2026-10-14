@@ -27,7 +27,7 @@ def scan(text: str, detector: InjectionDetector):
 def test_model_file_is_plain_json_not_pickle():
     # Loading a pickle can execute code; the model must be data only.
     data = json.loads(MODEL_FILE.read_text(encoding="utf-8"))
-    assert data["format"] == "bouncer-injection-classifier/1"
+    assert data["format"] == "modelguard-injection-classifier/1"
     assert 0 < data["threshold"] < 1
     assert data["metadata"]["cv_false_positive_rate"] <= data["metadata"]["max_false_positive_rate"]
 

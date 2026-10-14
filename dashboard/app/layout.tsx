@@ -16,8 +16,8 @@ const archivo = Archivo({ variable: "--font-sans", subsets: ["latin"], axes: ["w
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Bouncer",
-  description: "Keys, usage and blocked requests for the Bouncer LLM gateway",
+  title: "Model Guard",
+  description: "Keys, usage and blocked requests for the Model Guard LLM gateway",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

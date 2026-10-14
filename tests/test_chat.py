@@ -81,7 +81,7 @@ def test_max_completion_tokens_is_sent_as_max_tokens(client, upstream):
 def test_client_headers_are_not_forwarded(client, upstream):
     route = upstream.post(UPSTREAM_URL).mock(return_value=httpx.Response(200, json=COMPLETION))
 
-    # The client fixture already sends a real bnc_ key in Authorization.
+    # The client fixture already sends a real mgd_ key in Authorization.
     client.post("/v1/chat/completions", json=chat_body(), headers={"X-Custom": "leak"})
 
     sent_headers = route.calls.last.request.headers

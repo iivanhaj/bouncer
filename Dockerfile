@@ -12,7 +12,7 @@ WORKDIR /app
 COPY pyproject.toml ./
 RUN mkdir app mock_upstream && touch app/__init__.py mock_upstream/__init__.py \
     && pip install . \
-    && pip uninstall -y bouncer
+    && pip uninstall -y modelguard
 
 COPY app ./app
 COPY mock_upstream ./mock_upstream
@@ -21,8 +21,8 @@ COPY alembic.ini models.yaml ./
 RUN pip install --no-deps .
 
 # Never run as root inside the container.
-RUN useradd --create-home --uid 10001 bouncer
-USER bouncer
+RUN useradd --create-home --uid 10001 modelguard
+USER modelguard
 
 # 8000: API. 9100: Prometheus metrics (internal only; never publish it).
 EXPOSE 8000 9100

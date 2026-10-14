@@ -39,7 +39,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <ShieldCheckIcon className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="font-wide truncate text-base font-bold tracking-tight">Bouncer</span>
+                  <span className="font-wide truncate text-base font-bold tracking-tight">Model Guard</span>
                   <span className="truncate text-xs text-muted-foreground">LLM gateway</span>
                 </div>
               </Link>

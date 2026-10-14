@@ -13,7 +13,7 @@ from app.errors import GatewayError
 CHAT_COMPLETIONS_PATH = "/v1/chat/completions"
 
 # Headers are never copied from the incoming request: httpx builds every upstream request from
-# scratch, so the client's Authorization header (their bnc_ key) can never leak upstream.
+# scratch, so the client's Authorization header (their mgd_ key) can never leak upstream.
 
 
 def _transport_error(exc: httpx.RequestError) -> GatewayError:

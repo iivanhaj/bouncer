@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def test_concurrent_migrations_take_turns_and_all_succeed():
     # Start from an empty schema so the first instance really has work to do.
-    env = {**os.environ, "BOUNCER_DATABASE_URL": TEST_DATABASE_URL}
+    env = {**os.environ, "MODELGUARD_DATABASE_URL": TEST_DATABASE_URL}
     subprocess.run([sys.executable, "-m", "alembic", "downgrade", "base"], cwd=ROOT, env=env, check=True)
 
     try:

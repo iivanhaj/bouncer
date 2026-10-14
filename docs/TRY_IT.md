@@ -1,4 +1,4 @@
-# Try Bouncer yourself
+# Try Model Guard yourself
 
 A hands-on tour, about 15 minutes. Commands are for **PowerShell** on Windows, run from the
 repo folder. Every step here was run against the live stack before this guide was written.
@@ -35,7 +35,7 @@ repo folder. Every step here was run against the live stack before this guide wa
 Then in PowerShell, paste your key and define a small helper:
 
 ```powershell
-$key = "bnc_PASTE_YOUR_KEY_HERE"
+$key = "mgd_PASTE_YOUR_KEY_HERE"
 $h = @{ Authorization = "Bearer $key" }
 function Ask($text, $model = "qwen2.5:0.5b") {
   $body = @{ model = $model; max_tokens = 60; messages = @(@{ role = "user"; content = $text }) } | ConvertTo-Json -Depth 5
@@ -106,7 +106,7 @@ Only the base URL and key change:
 
 ```powershell
 .\.venv\Scripts\pip install openai
-$env:BOUNCER_KEY = $key
+$env:MODELGUARD_KEY = $key
 .\.venv\Scripts\python scripts\try_openai_sdk.py
 ```
 
@@ -132,24 +132,24 @@ Prometheus runs **one query at a time**: paste one into the box at http://127.0.
 press **Execute**, and use the **Table** tab for current values or **Graph** for a chart.
 Or click a link below: each opens with the query filled in.
 
-1. Requests by outcome (ok, blocked_injection, bad_request, ...) ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=sum%20by%20%28status%29%20%28bouncer_requests_total%29)):
+1. Requests by outcome (ok, blocked_injection, bad_request, ...) ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=sum%20by%20%28status%29%20%28modelguard_requests_total%29)):
    ```
-   sum by (status) (bouncer_requests_total)
-   ```
-
-2. Requests turned away before the pipeline (unauthorized, rate_limited, body_too_large) ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=sum%20by%20%28reason%29%20%28bouncer_rejected_total%29)):
-   ```
-   sum by (reason) (bouncer_rejected_total)
+   sum by (status) (modelguard_requests_total)
    ```
 
-3. Which injection rules fired on blocked requests ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=sum%20by%20%28rule%29%20%28bouncer_blocked_total%29)):
+2. Requests turned away before the pipeline (unauthorized, rate_limited, body_too_large) ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=sum%20by%20%28reason%29%20%28modelguard_rejected_total%29)):
    ```
-   sum by (rule) (bouncer_blocked_total)
+   sum by (reason) (modelguard_rejected_total)
    ```
 
-4. p95 request latency in seconds over the last 5 minutes ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=histogram_quantile%280.95%2C%20sum%20by%20%28le%29%20%28rate%28bouncer_request_duration_seconds_bucket%5B5m%5D%29%29%29)):
+3. Which injection rules fired on blocked requests ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=sum%20by%20%28rule%29%20%28modelguard_blocked_total%29)):
    ```
-   histogram_quantile(0.95, sum by (le) (rate(bouncer_request_duration_seconds_bucket[5m])))
+   sum by (rule) (modelguard_blocked_total)
+   ```
+
+4. p95 request latency in seconds over the last 5 minutes ([open](http://127.0.0.1:9090/graph?g0.tab=1&g0.expr=histogram_quantile%280.95%2C%20sum%20by%20%28le%29%20%28rate%28modelguard_request_duration_seconds_bucket%5B5m%5D%29%29%29)):
+   ```
+   histogram_quantile(0.95, sum by (le) (rate(modelguard_request_duration_seconds_bucket[5m])))
    ```
 
 If a query shows no data, send a few requests first (steps 2-7) and wait ~5 seconds for
@@ -158,7 +158,7 @@ the next scrape.
 ## Optional
 
 - **Classifier monitor mode** (log what the classifier would block, without blocking): add
-  `BOUNCER_INJECTION_CLASSIFIER_MODE=monitor` to `.env`, run
+  `MODELGUARD_INJECTION_CLASSIFIER_MODE=monitor` to `.env`, run
   `docker compose --profile app up -d gateway`, and repeat step 4: it gets through, and the
   Blocked page shows it as "Would block".
 - **Kubernetes**: `bash k8s/setup.sh` (from Git Bash, with kind installed) builds fresh images,

@@ -75,7 +75,7 @@ def test_verhoeff():
         ("anthropic sk-ant-api03-abcdefghijklmnopqrstu", ["SECRET"]),
         ("slack xoxb-1234567890-abcdefghij", ["SECRET"]),
         ("jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.abc123", ["SECRET"]),
-        ("my key bnc_" + "A" * 43 + "_0a1b2c", ["SECRET"]),
+        ("my key mgd_" + "A" * 43 + "_0a1b2c", ["SECRET"]),
         ("-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA\n-----END RSA PRIVATE KEY-----", ["SECRET"]),
         ("a uuid 123e4567-e89b-12d3-a456-426614174000 is not a secret", []),
         ("sha256 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", []),

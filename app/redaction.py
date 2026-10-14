@@ -113,7 +113,7 @@ DETECTORS: list[Detector] = [
     Detector(
         "SECRET", 0, re.compile(r"\beyJ[A-Za-z0-9_-]{5,4000}\.eyJ[A-Za-z0-9_-]{5,8000}\.[A-Za-z0-9_-]{0,2000}")
     ),  # JWT
-    Detector("SECRET", 0, re.compile(r"\bbnc_[0-9A-Za-z]{43}_[0-9a-f]{6}\b")),  # this gateway's own keys
+    Detector("SECRET", 0, re.compile(r"\bmgd_[0-9A-Za-z]{43}_[0-9a-f]{6}\b")),  # this gateway's own keys
     # 13-19 digits, optionally separated by single spaces or dashes, then the Luhn check.
     # Not glued to a letter, digit or dash: a checksum alone passes ~10% of random numbers,
     # so context rules out digit runs inside UUIDs, hashes and other identifiers.
